@@ -25,9 +25,12 @@
 
 class ChessGame;
 class PlayerBuilder;
-class EngineConfigurationModel;
-class EngineConfigurationProxyModel;
+//class EngineConfigurationModel;
+//class EngineConfigurationProxyModel;
 class EngineManager;
+//myadd
+class TimeControl;
+class GameAdjudicator;
 
 namespace Ui {
 	class NewGameDialog;
@@ -54,8 +57,7 @@ class NewGameDialog : public QDialog
 		 * Creates a "New Game" dialog with \a engineManager as the
 		 * source of engine configurations.
 		 */
-		NewGameDialog(EngineManager* engineManager,
-			      QWidget* parent = nullptr);
+        NewGameDialog(QWidget* parent = nullptr);
 		/*! Destroys the dialog. */
 		virtual ~NewGameDialog();
 
@@ -63,21 +65,27 @@ class NewGameDialog : public QDialog
 		ChessGame* createGame() const;
 		/*! Creates and returns the PlayerBuilder for \a side. */
 		PlayerBuilder* createPlayerBuilder(Chess::Side side) const;
-
 	private slots:
-		void configureEngine();
-		void onVariantChanged(const QString& variant);
-		void onEngineChanged(int index, Chess::Side = Chess::Side::NoSide);
 
-	private:
-		void setPlayerType(Chess::Side side, PlayerType type);
+        void on_btn_playerColor_toggled(bool checked);
+
+        void on_slider_timer_valueChanged(int value);
+
+        void on_slider_timeInc_valueChanged(int value);
+
+        void on_slider_skillLevel_valueChanged(int value);
+
+        void on_slider_uciElo_valueChanged(int value);
+
+        void on_checkBox_limitStreng_toggled(bool checked);
+
+private:
 		PlayerType playerType(Chess::Side side) const;
-
-		EngineManager* m_engineManager;
-		EngineConfigurationModel* m_engines;
-		EngineConfigurationProxyModel* m_proxyModel;
-		EngineConfiguration m_engineConfig[2];
 		Ui::NewGameDialog* ui;
+        int m_timer;
+        int m_timeInc;
+        int m_skillLevel,m_elo;
+        bool m_limitStrenger = false;
 };
 
 #endif // NEWGAMEDIALOG_H

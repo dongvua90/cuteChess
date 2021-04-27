@@ -26,5 +26,5 @@ QMAKE_EXTRA_TARGETS += doc-txt
 QMAKE_DISTCLEAN += docs/cutechess-cli.6.txt
 QMAKE_DISTCLEAN += docs/engines.json.5.txt
 
-TRANSLATIONS += \
-    translations/cutechess_zh_CN.ts
+#TRANSLATIONS += \
+#    translations/cutechess_zh_CN.ts

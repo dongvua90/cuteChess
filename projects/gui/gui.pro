@@ -36,9 +36,9 @@ win32 {
 	QMAKE_CXXFLAGS += -Wextra
 }
 
-macx {
-    ICON = res/icons/cutechess_mac.icns
-}
+#macx {
+#    ICON = res/icons/cutechess_mac.icns
+#}
 
 UI_HEADERS_DIR = src
 

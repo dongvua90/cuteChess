@@ -34,7 +34,6 @@
 
 EngineManagementWidget::EngineManagementWidget(QWidget* parent)
 	: QWidget(parent),
-	  m_engineManager(CuteChessApplication::instance()->engineManager()),
 	  m_hasChanged(false),
 	  m_filteredModel(new QSortFilterProxyModel(this)),
 	  ui(new Ui::EngineManagementWidget)
@@ -94,8 +93,8 @@ bool EngineManagementWidget::hasConfigChanged() const
 
 void EngineManagementWidget::saveConfig()
 {
-	QString confPath = CuteChessApplication::instance()->configPath();
-	m_engineManager->saveEngines(confPath + QLatin1String("/engines.json"));
+//	QString confPath = CuteChessApplication::instance()->configPath();
+//	m_engineManager->saveEngines(confPath + QLatin1String("/engines.json"));
 }
 
 void EngineManagementWidget::updateUi()

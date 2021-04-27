@@ -1,0 +1,16 @@
+[Event "?"]
+[Site "?"]
+[Date "2021.04.27"]
+[Round "?"]
+[White "pika"]
+[Black "pika"]
+[Result "*"]
+[ECO "A02"]
+[GameStartTime "2021-04-27T14:36:52.663 +07"]
+[Opening "Bird"]
+[Termination "unterminated"]
+[TimeControl "inf"]
+[Variation "Hobbs gambit"]
+
+1. f4 g5 {1.1s} 2. g4 {1.3s} *
+

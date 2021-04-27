@@ -30,6 +30,7 @@
 #include <board/result.h>
 #include <moveevaluation.h>
 
+
 int main(int argc, char* argv[])
 {
 	// Register types for signal / slot connections
@@ -39,8 +40,8 @@ int main(int argc, char* argv[])
 	qRegisterMetaType<Chess::Result>("Chess::Result");
 	qRegisterMetaType<MoveEvaluation>("MoveEvaluation");
 
-	CuteChessApplication app(argc, argv);
+    CuteChessApplication app(argc, argv);
 
-	app.newDefaultGame();
-	return app.exec();
+    app.newDefaultGame();
+    return app.exec();
 }

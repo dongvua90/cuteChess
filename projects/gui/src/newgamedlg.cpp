@@ -30,72 +30,29 @@
 #include <openingsuite.h>
 
 #include "cutechessapp.h"
-#include "engineconfigurationmodel.h"
-#include "engineconfigproxymodel.h"
-#include "engineconfigurationdlg.h"
+//#include "engineconfigurationmodel.h"
+//#include "engineconfigproxymodel.h"
+//#include "engineconfigurationdlg.h"
 #include "timecontroldlg.h"
 #include "stringvalidator.h"
+#include <timecontrol.h>
 
-#ifdef QT_DEBUGD
-#include <modeltest.h>
-#endif
 
-NewGameDialog::NewGameDialog(EngineManager* engineManager, QWidget* parent)
+NewGameDialog::NewGameDialog(QWidget* parent)
 	: QDialog(parent),
-	  m_engineManager(engineManager),
-	  ui(new Ui::NewGameDialog)
+      ui(new Ui::NewGameDialog)
+    ,m_timer(5)
+    ,m_timeInc(0)
 {
-	Q_ASSERT(engineManager != nullptr);
 	ui->setupUi(this);
-
-	m_engines = new EngineConfigurationModel(m_engineManager, this);
-    #ifdef QT_DEBUGD
-	new ModelTest(m_engines, this);
-	#endif
-
-	connect(ui->m_configureWhiteEngineButton, SIGNAL(clicked()),
-		this, SLOT(configureEngine()));
-	connect(ui->m_configureBlackEngineButton, SIGNAL(clicked()),
-		this, SLOT(configureEngine()));
-
-	m_proxyModel = new EngineConfigurationProxyModel(this);
-	m_proxyModel->setSourceModel(m_engines);
-	m_proxyModel->setSortCaseSensitivity(Qt::CaseInsensitive);
-	m_proxyModel->sort(0);
-	m_proxyModel->setDynamicSortFilter(true);
-
-	StringValidator* engineValidator = new StringValidator(this);
-	engineValidator->setModel(m_proxyModel);
-
-	connect(ui->m_whiteEngineComboBox, SIGNAL(currentIndexChanged(int)),
-		this, SLOT(onEngineChanged(int)));
-	connect(ui->m_blackEngineComboBox, SIGNAL(currentIndexChanged(int)),
-		this, SLOT(onEngineChanged(int)));
-
-	ui->m_whiteEngineComboBox->setModel(m_proxyModel);
-	ui->m_whiteEngineComboBox->setValidator(engineValidator);
-	ui->m_blackEngineComboBox->setModel(m_proxyModel);
-	ui->m_blackEngineComboBox->setValidator(engineValidator);
-
-	connect(ui->m_gameSettings, SIGNAL(variantChanged(QString)),
-		this, SLOT(onVariantChanged(QString)));
-	onVariantChanged(ui->m_gameSettings->chessVariant());
-
-	connect(ui->m_whitePlayerCpuRadio, &QRadioButton::toggled, [=](bool checked)
-	{
-		auto type = checked ? CPU : Human;
-		setPlayerType(Chess::Side::White, type);
-	});
-	connect(ui->m_blackPlayerCpuRadio, &QRadioButton::toggled, [=](bool checked)
-	{
-		auto type = checked ? CPU : Human;
-		setPlayerType(Chess::Side::Black, type);
-	});
-
-	connect(ui->m_gameSettings, &GameSettingsWidget::statusChanged, [=](bool ok)
-	{
-		ui->m_buttonBox->button(QDialogButtonBox::Ok)->setEnabled(ok);
-	});
+    ui->comboBox_variant->addItem("standard");
+    ui->comboBox_variant->addItem("atomic");
+    ui->comboBox_variant->addItem("kingofthehill");
+    ui->comboBox_variant->addItem("crazyhouse");
+    ui->slider_timer->setValue(m_timer);
+    ui->lb_timer->setText(QString::number(m_timer));
+    ui->slider_timeInc->setValue(m_timeInc);
+    ui->lb_timeInc->setText(QString::number(m_timeInc));
 }
 
 NewGameDialog::~NewGameDialog()
@@ -105,44 +62,12 @@ NewGameDialog::~NewGameDialog()
 
 ChessGame* NewGameDialog::createGame() const
 {
-	bool ok = true;
-	const QString variant = ui->m_gameSettings->chessVariant();
-	auto board = Chess::BoardFactory::create(variant);
+    auto board = Chess::BoardFactory::create(ui->comboBox_variant->currentText());
 	auto pgn = new PgnGame();
 	pgn->setSite(QSettings().value("pgn/site").toString());
 	auto game = new ChessGame(board, pgn);
-
-	game->setTimeControl(ui->m_gameSettings->timeControl());
-	game->setAdjudicator(ui->m_gameSettings->adjudicator());
-
-	auto suite = ui->m_gameSettings->openingSuite();
-	if (suite)
-	{
-		int depth = ui->m_gameSettings->openingSuiteDepth();
-		ok = game->setMoves(suite->nextGame(depth));
-		delete suite;
-	}
-
-	auto book = ui->m_gameSettings->openingBook();
-	if (book)
-	{
-		int depth = ui->m_gameSettings->bookDepth();
-		game->setBookOwnership(true);
-
-		for (int i = 0; i < 2; i++)
-		{
-			auto side = Chess::Side::Type(i);
-			if (playerType(side) == CPU)
-				game->setOpeningBook(book, side, depth);
-		}
-	}
-
-	if (!ok)
-	{
-		delete game;
-		return nullptr;
-	}
-
+    QString stim=QString::number(m_timer)+":00+"+QString::number(m_timeInc);
+    game->setTimeControl(TimeControl(stim));
 	return game;
 }
 
@@ -150,8 +75,19 @@ PlayerBuilder* NewGameDialog::createPlayerBuilder(Chess::Side side) const
 {
 	if (playerType(side) == CPU)
 	{
-		auto config = m_engineConfig[side];
-		ui->m_gameSettings->applyEngineConfiguration(&config);
+        EngineConfiguration config;
+        config.setWorkingDirectory("/home/pika/Documents/LicheePiZero/QtProject/Stockfish/src");
+        config.setCommand("./stockfish");
+        config.setProtocol("uci");
+        config.setOption("nodestime","1");
+        config.setOption("Hash","1");
+        config.setOption("Skill Level",QString::number(m_skillLevel));
+        if(m_limitStrenger){
+            config.setOption("UCI_LimitStrength","true");
+            config.setOption("UCI_Elo",QString::number(m_elo));
+        }else{
+            config.setOption("Limit Strenger","false");
+        }
 
 		return new EngineBuilder(config);
 	}
@@ -160,81 +96,61 @@ PlayerBuilder* NewGameDialog::createPlayerBuilder(Chess::Side side) const
 	return new HumanBuilder(CuteChessApplication::userName(), ignoreFlag);
 }
 
-void NewGameDialog::setPlayerType(Chess::Side side, PlayerType type)
-{
-	if (side == Chess::Side::White)
-	{
-		ui->m_whiteEngineComboBox->setEnabled(type == CPU);
-		ui->m_configureWhiteEngineButton->setEnabled(type == CPU);
-	}
-	else
-	{
-		ui->m_blackEngineComboBox->setEnabled(type == CPU);
-		ui->m_configureBlackEngineButton->setEnabled(type == CPU);
-	}
-
-	int humanCount = 0;
-	if (playerType(Chess::Side::White) == Human)
-		humanCount++;
-	if (playerType(Chess::Side::Black) == Human)
-		humanCount++;
-	ui->m_gameSettings->onHumanCountChanged(humanCount);
-}
 
 NewGameDialog::PlayerType NewGameDialog::playerType(Chess::Side side) const
 {
 	Q_ASSERT(!side.isNull());
 
 	if (side == Chess::Side::White)
-		return (ui->m_whitePlayerHumanRadio->isChecked()) ? Human : CPU;
-	else
-		return (ui->m_blackPlayerHumanRadio->isChecked()) ? Human : CPU;
+    {
+        if(ui->btn_playerColor->isChecked())
+            return CPU;
+        else
+            return Human;
+
+    }else{
+        if(ui->btn_playerColor->isChecked())
+            return Human;
+        else
+            return CPU;
+    }
 }
 
-void NewGameDialog::configureEngine()
+
+void NewGameDialog::on_btn_playerColor_toggled(bool checked)
 {
-	Chess::Side side;
-	if (QObject::sender() == ui->m_configureWhiteEngineButton)
-		side = Chess::Side::White;
-	else
-		side = Chess::Side::Black;
-
-	EngineConfigurationDialog dlg(EngineConfigurationDialog::ConfigureEngine, this);
-	dlg.applyEngineInformation(m_engineConfig[side]);
-
-	if (dlg.exec() == QDialog::Accepted)
-		m_engineConfig[side] = dlg.engineConfiguration();
+    if(checked){
+        ui->btn_playerColor->setText("play as Black");
+    }else{
+        ui->btn_playerColor->setText("play as White");
+    }
 }
 
-void NewGameDialog::onVariantChanged(const QString& variant)
+void NewGameDialog::on_slider_timer_valueChanged(int value)
 {
-	m_proxyModel->setFilterVariant(variant);
-
-	bool empty = m_proxyModel->rowCount() == 0;
-	if (empty)
-	{
-		ui->m_whitePlayerHumanRadio->setChecked(true);
-		ui->m_blackPlayerHumanRadio->setChecked(true);
-	}
-
-	ui->m_whitePlayerCpuRadio->setDisabled(empty);
-	ui->m_blackPlayerCpuRadio->setDisabled(empty);
+    m_timer = value;
+    ui->lb_timer->setText(QString::number(m_timer)+" min");
 }
 
-void NewGameDialog::onEngineChanged(int index, Chess::Side side)
+void NewGameDialog::on_slider_timeInc_valueChanged(int value)
 {
-	if (side == Chess::Side::NoSide)
-	{
-		if (QObject::sender() == ui->m_whiteEngineComboBox)
-			side = Chess::Side::White;
-		else
-			side = Chess::Side::Black;
-	}
+    m_timeInc = value;
+    ui->lb_timeInc->setText(QString::number(m_timeInc)+" s");
+}
 
-	auto modelIndex = m_proxyModel->index(index, 0);
-	if (modelIndex.isValid())
-	{
-		int i = m_proxyModel->mapToSource(modelIndex).row();
-		m_engineConfig[side] = m_engineManager->engineAt(i);
-	}
+void NewGameDialog::on_slider_skillLevel_valueChanged(int value)
+{
+    m_skillLevel = value;
+    ui->lb_skillLevel->setText(QString::number(m_skillLevel));
+}
+
+void NewGameDialog::on_slider_uciElo_valueChanged(int value)
+{
+    m_elo = value;
+    ui->lb_ucielo->setText(QString::number(m_elo));
+}
+
+void NewGameDialog::on_checkBox_limitStreng_toggled(bool checked)
+{
+    m_limitStrenger = checked;
 }

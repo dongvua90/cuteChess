@@ -27,22 +27,15 @@ namespace Chess {
 	class Board;
 	class Move;
 }
-class QMenu;
-class QAction;
 class QCloseEvent;
 class QTabBar;
 class GameViewer;
 class MoveList;
-class PlainTextLog;
 class PgnGame;
 class ChessGame;
 class ChessPlayer;
-class PgnTagsModel;
 class Tournament;
 class GameTabBar;
-class EvalHistory;
-class EvalWidget;
-
 /**
  * MainWindow
 */
@@ -53,7 +46,6 @@ class MainWindow : public QMainWindow
 	public:
 		explicit MainWindow(ChessGame* game);
 		virtual ~MainWindow();
-		QString windowListTitle() const;
 
 	public slots:
 		void addGame(ChessGame* game);
@@ -64,11 +56,8 @@ class MainWindow : public QMainWindow
 
 	private slots:
 		void newGame();
-		void showGameWindow();
-		void updateWindowTitle();
-		void updateMenus();
 		bool save();
-		bool saveAs();
+        bool saveAs();
 		void onTabChanged(int index);
 		void onTabCloseRequested(int index);
 		void closeTab(int index);
@@ -76,12 +65,9 @@ class MainWindow : public QMainWindow
 		void onGameManagerFinished();
 		void onGameStartFailed(ChessGame* game);
 		void onGameFinished(ChessGame* game);
-		void editMoveComment(int ply, const QString& comment);
-		void copyFen();
-		void pasteFen();
-		void copyPgn();
 		void closeAllGames();
 		void resignGame();
+        void myClose();
 
 	private:
 		struct TabData
@@ -95,11 +81,7 @@ class MainWindow : public QMainWindow
             Tournament* m_tournament;
 			bool m_finished;
 		};
-
-		void createActions();
-		void createMenus();
 		void createToolBars();
-		void createDockWindows();
 		void readSettings();
 		void writeSettings();
 		QString genericTitle(const TabData& gameData) const;
@@ -107,44 +89,18 @@ class MainWindow : public QMainWindow
 		void lockCurrentGame();
 		void unlockCurrentGame();
 		bool saveGame(const QString& fileName);
-		bool askToSave();
 		void setCurrentGame(const TabData& gameData);
 		void removeGame(int index);
 		int tabIndex(ChessGame* game) const;
         int tabIndex(Tournament* tournament, bool freeTab = false) const;
-//		void addDefaultWindowMenu();
 
 		QMenu* m_gameMenu;
-		QMenu* m_toolsMenu;
-		QMenu* m_viewMenu;
 		QMenu* m_windowMenu;
 
 		GameTabBar* m_tabBar;
 
 		GameViewer* m_gameViewer;
 		MoveList* m_moveList;
-		PgnTagsModel* m_tagsModel;
-
-		QAction* m_quitGameAct;
-		QAction* m_newGameAct;
-		QAction* m_resignGameAct;
-		QAction* m_closeGameAct;
-		QAction* m_saveGameAct;
-		QAction* m_saveGameAsAct;
-		QAction* m_copyFenAct;
-		QAction* m_pasteFenAct;
-		QAction* m_copyPgnAct;
-		QAction* m_flipBoardAct;
-
-		QAction* m_minimizeAct;
-//		QAction* m_showGameDatabaseWindowAct;
-//		QAction* m_showGameWallAct;
-//		QAction* m_showPreviousTabAct;
-//		QAction* m_showNextTabAct;
-        QAction* m_showSettingsAct;
-
-		PlainTextLog* m_engineDebugLog;
-
 
 		QPointer<ChessGame> m_game;
 		QPointer<ChessPlayer> m_players[2];
