@@ -21,7 +21,6 @@
 
 #include <QGraphicsObject>
 #include <board/piece.h>
-class QSvgRenderer;
 
 /*!
  * \brief A graphical representation of a chess piece.
@@ -53,7 +52,6 @@ class GraphicsPiece : public QGraphicsObject
 		GraphicsPiece(const Chess::Piece& piece,
 			      qreal squareSize,
 			      const QString& elementId,
-			      QSvgRenderer* renderer,
 			      QGraphicsItem* parent = nullptr);
 
 		// Inherited from QGraphicsObject
@@ -91,8 +89,9 @@ class GraphicsPiece : public QGraphicsObject
 		Chess::Piece m_piece;
 		QRectF m_rect;
 		QString m_elementId;
-		QSvgRenderer* m_renderer;
 		QGraphicsItem* m_container;
+        //edit
+        bool isError;
 };
 
 #endif // GRAPHICSPIECE_H

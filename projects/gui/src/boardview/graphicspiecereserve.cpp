@@ -28,6 +28,7 @@ GraphicsPieceReserve::GraphicsPieceReserve(qreal squareSize,
 	  m_tileHeight(squareSize),
 	  m_rowCount(1)
 {
+    qDebug("GraphicsReseve");
 	m_rect.setWidth(m_tileWidth * 2);
 	m_rect.setHeight(m_tileHeight);
 	m_rect.moveCenter(QPointF(0, 0));

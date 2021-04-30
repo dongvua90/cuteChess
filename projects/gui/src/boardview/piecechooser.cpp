@@ -5,7 +5,7 @@
 #include <QPropertyAnimation>
 #include <QParallelAnimationGroup>
 #include "graphicspiece.h"
-
+#include <QDebug>
 
 PieceChooser::PieceChooser(const QList<GraphicsPiece*>& pieces,
 			   qreal squareSize,
@@ -46,13 +46,13 @@ void PieceChooser::paint(QPainter* painter,
 	Q_UNUSED(option);
 	Q_UNUSED(widget);
 
-	painter->setBrush(QColor(Qt::white));
+    painter->setBrush(QColor(Qt::white));
 
 	QPen pen(painter->pen());
 	pen.setWidth(3);
 	painter->setPen(pen);
 
-	painter->drawRoundedRect(m_rect, 10.0, 10.0);
+    painter->drawRoundedRect(m_rect, 10.0, 10.0);
 }
 
 void PieceChooser::cancelChoice()
@@ -121,6 +121,7 @@ void PieceChooser::destroy()
 
 void PieceChooser::mousePressEvent(QGraphicsSceneMouseEvent* event)
 {
+//        qDebug()<<"Piecechoose";
 	if (event->button() != Qt::LeftButton)
 		return;
 
@@ -140,4 +141,5 @@ void PieceChooser::mousePressEvent(QGraphicsSceneMouseEvent* event)
 		emit pieceChosen(piece->pieceType());
 		destroy();
 	}
+
 }

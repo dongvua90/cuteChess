@@ -48,17 +48,17 @@ class GraphicsBoard : public QGraphicsItem
 		 * ranks/rows, and the squares' width and height will be
 		 * \a squareSize.
 		 */
-		explicit GraphicsBoard(int files,
+        explicit GraphicsBoard(int files,
 				       int ranks,
 				       qreal squareSize,
 				       QGraphicsItem* parent = nullptr);
 		/*! Destroys the GraphicsBoard object. */
-		virtual ~GraphicsBoard();
+        virtual ~GraphicsBoard();
 
 		// Inherited from QGraphicsItem
 		virtual int type() const;
-		virtual QRectF boundingRect() const;
-		virtual void paint(QPainter* painter,
+        virtual QRectF boundingRect() const;
+        virtual void paint(QPainter* painter,
 				   const QStyleOptionGraphicsItem* option,
 				   QWidget* widget = nullptr);
 

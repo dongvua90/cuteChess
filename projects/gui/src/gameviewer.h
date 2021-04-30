@@ -24,6 +24,10 @@
 #include <QPointer>
 #include <board/side.h>
 #include <board/genericmove.h>
+#include <QPushButton>
+#include "menuscreen.h"
+#include "movelist.h"
+#include <QLineEdit>
 class QToolButton;
 class QSlider;
 class ChessGame;
@@ -51,6 +55,9 @@ class GameViewer : public QWidget
 		Chess::Board* board() const;
 		BoardScene* boardScene() const;
 		ChessClock* chessClock(Chess::Side side);
+        MenuScreen* getMenu();
+
+        MoveList *mvlist;
 
 	public slots:
 		void viewMove(int index, bool keyLeft = false);
@@ -68,7 +75,14 @@ class GameViewer : public QWidget
 		void onFenChanged(const QString& fen);
 		void onMoveMade(const Chess::GenericMove& move);
 
+        void onExternClicked(bool checked);
+        void onMenuClicked();
+
+        void makemove();
+        void onDebug();
+
 	private:
+
 		void viewFirstMove();
 		void viewPreviousMove();
 		void viewNextMove();
@@ -78,7 +92,7 @@ class GameViewer : public QWidget
 
 		BoardScene* m_boardScene;
 		BoardView* m_boardView;
-		QSlider* m_moveNumberSlider;
+//		QSlider* m_moveNumberSlider;
 		ChessClock* m_chessClock[2];
 
 		QToolButton* m_viewFirstMoveBtn;
@@ -90,6 +104,15 @@ class GameViewer : public QWidget
 		QVector<Chess::GenericMove> m_moves;
 		int m_moveIndex;
 		bool m_humanGame;
+
+        QPushButton *btn_extern;
+        QPushButton *btn_menu;
+
+        MenuScreen *menu;
+        QLineEdit *text_move;
+
+        ChessGame *mygame;
+
 };
 
 #endif // GAMEVIEWER_H

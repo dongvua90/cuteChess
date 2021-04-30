@@ -22,6 +22,9 @@
 #include <QMainWindow>
 #include <QPointer>
 #include <board/side.h>
+#include "menuscreen.h"
+#include "firstscreen.h"
+#include "beginplayfriend.h"
 
 namespace Chess {
 	class Board;
@@ -68,6 +71,9 @@ class MainWindow : public QMainWindow
 		void closeAllGames();
 		void resignGame();
         void myClose();
+        void onMenuNewgame();
+        void onMenuNewgameOnline();
+        void newGameOnline(int timer,int timeInc,QString variant,bool color,bool billELO,QString nickname);
 
 	private:
 		struct TabData
@@ -82,8 +88,6 @@ class MainWindow : public QMainWindow
 			bool m_finished;
 		};
 		void createToolBars();
-		void readSettings();
-		void writeSettings();
 		QString genericTitle(const TabData& gameData) const;
 		QString nameOnClock(const QString& name, Chess::Side side) const;
 		void lockCurrentGame();
@@ -111,6 +115,12 @@ class MainWindow : public QMainWindow
 		bool m_readyToClose;
 
 		bool m_firstTabAutoCloseEnabled;
+
+        bool isNewGame=false;
+
+        MenuScreen *menu;
+        FirstScreen *fristscreen;
+        BeginPlayFriend *beginPlayFriend;
 };
 
 #endif // MAINWINDOW_H

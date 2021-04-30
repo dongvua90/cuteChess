@@ -23,7 +23,7 @@
 #include <QPropertyAnimation>
 #include <board/square.h>
 #include "graphicspiece.h"
-
+#include <QDebug>
 namespace {
 
 class TargetHighlights : public QGraphicsObject
@@ -68,11 +68,11 @@ GraphicsBoard::GraphicsBoard(int files,
 	Q_ASSERT(files > 0);
 	Q_ASSERT(ranks > 0);
 
-	m_rect.setSize(QSizeF(squareSize * files, squareSize * ranks));
-	m_rect.moveCenter(QPointF(0, 0));
+    m_rect.setSize(QSizeF(squareSize * files, squareSize * ranks));
+    m_rect.moveCenter(QPointF(0, 0));
 	m_textColor = QApplication::palette().text().color();
 
-	setCacheMode(DeviceCoordinateCache);
+    setCacheMode(DeviceCoordinateCache);
 }
 
 GraphicsBoard::~GraphicsBoard()
@@ -87,9 +87,12 @@ int GraphicsBoard::type() const
 
 QRectF GraphicsBoard::boundingRect() const
 {
-	const auto margins = QMarginsF(m_coordSize, m_coordSize,
-				       m_coordSize, m_coordSize);
-	return m_rect.marginsAdded(margins);
+    const auto margins = QMarginsF(0, 0,
+                       0, 0);
+//    qDebug()<<"X:"<<m_rect.x()<<" Y:"<<m_rect.y()<<"W:"<<m_rect.width()<<"H:"<<m_rect.height();
+    QRectF mm_rect(-136,-136,272,272);
+    return mm_rect;
+    return m_rect.marginsAdded(margins);;
 }
 
 void GraphicsBoard::paint(QPainter* painter,
@@ -98,8 +101,8 @@ void GraphicsBoard::paint(QPainter* painter,
 {
 	Q_UNUSED(option);
 	Q_UNUSED(widget);
-
-	QRectF rect(m_rect.topLeft(), QSizeF(m_squareSize, m_squareSize));
+    QRectF mm_rect(-136,-136,272,272);
+    QRectF rect(mm_rect.topLeft(), QSizeF(m_squareSize, m_squareSize));
 	const qreal rLeft = rect.left();
 
 	// paint squares
@@ -122,35 +125,7 @@ void GraphicsBoard::paint(QPainter* painter,
 	painter->setFont(font);
 	painter->setPen(m_textColor);
 
-	// paint file coordinates
-	const QString alphabet = "abcdefghijklmnopqrstuvwxyz";
-	for (int i = 0; i < m_files; i++)
-	{
-		const qreal tops[] = {m_rect.top() - m_coordSize,
-		                      m_rect.bottom()};
-		for (const auto top : tops)
-		{
-			rect = QRectF(m_rect.left() + (m_squareSize * i), top,
-			              m_squareSize, m_coordSize);
-			int file = m_flipped ? m_files - i - 1 : i;
-			painter->drawText(rect, Qt::AlignCenter, alphabet[file]);
-		}
-	}
 
-	// paint rank coordinates
-	for (int i = 0; i < m_ranks; i++)
-	{
-		const qreal lefts[] = {m_rect.left() - m_coordSize,
-		                       m_rect.right()};
-		for (const auto left : lefts)
-		{
-			rect = QRectF(left, m_rect.top() + (m_squareSize * i),
-			              m_coordSize, m_squareSize);
-			int rank = m_flipped ? i + 1 : m_ranks - i;
-			const auto num = QString::number(rank);
-			painter->drawText(rect, Qt::AlignCenter, num);
-		}
-	}
 }
 
 Chess::Square GraphicsBoard::squareAt(const QPointF& point) const
@@ -163,6 +138,7 @@ Chess::Square GraphicsBoard::squareAt(const QPointF& point) const
 
 	if (m_flipped)
 		return Chess::Square(m_files - col - 1, row);
+//    qDebug()<<"squareAT:"<<col<<"-"<<m_ranks-row-1;
 	return Chess::Square(col, m_ranks - row - 1);
 }
 

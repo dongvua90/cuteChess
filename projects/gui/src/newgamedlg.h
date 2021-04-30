@@ -77,7 +77,13 @@ class NewGameDialog : public QDialog
 
         void on_slider_uciElo_valueChanged(int value);
 
-        void on_checkBox_limitStreng_toggled(bool checked);
+        void on_btn_limitStrength_toggled(bool checked);
+
+        void on_btn_close_clicked();
+
+        void on_btn_ok_clicked();
+
+        void on_comboBox_variant_currentIndexChanged(int index);
 
 private:
 		PlayerType playerType(Chess::Side side) const;
@@ -85,7 +91,15 @@ private:
         int m_timer;
         int m_timeInc;
         int m_skillLevel,m_elo;
-        bool m_limitStrenger = false;
+        bool m_limitStrenger;
+        bool m_color;
+        int m_variant;
+        void setTimer(int timer);
+        int  convertToTimer();
+        int  convertToTimeInc();
+        void setTimeInc(int time);
+        void readSetting();
+        void writeSetting();
 };
 
 #endif // NEWGAMEDIALOG_H

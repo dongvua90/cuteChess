@@ -23,7 +23,7 @@
 #include <QVBoxLayout>
 
 
-ChessClock::ChessClock(QWidget* parent)
+ChessClock::ChessClock(bool posUp,QWidget* parent)
 	: QWidget(parent),
 	  m_totalTime(0),
 	  m_timerId(-1),
@@ -32,18 +32,48 @@ ChessClock::ChessClock(QWidget* parent)
 	  m_timeLabel(new QLabel())
 {
 	m_defaultPalette = m_timeLabel->palette();
-	m_timeLabel->setAutoFillBackground(true);
+    m_headerPalette = m_timeLabel->palette();
+    m_defaultPalette.setColor(QPalette::Window,Qt::blue);
+    m_headerPalette.setColor(QPalette::Background,Qt::gray);
+
+    m_timeLabel->setAutoFillBackground(true);
 
 	m_nameLabel->setTextFormat(Qt::RichText);
-	m_nameLabel->setAlignment(Qt::AlignHCenter);
+    m_nameLabel->setAlignment(Qt::AlignHCenter |Qt::AlignVCenter);
+    m_nameLabel->setAutoFillBackground(true);
+    m_nameLabel->setPalette(m_headerPalette);
+    setPalette(m_headerPalette);
 
 	m_timeLabel->setTextFormat(Qt::RichText);
-	m_timeLabel->setAlignment(Qt::AlignHCenter);
+    m_timeLabel->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+
+    m_nameLabel->setMinimumWidth(208);
+    m_timeLabel->setMinimumWidth(208);
+    m_nameLabel->setMaximumWidth(480);
+    m_timeLabel->setMaximumWidth(480);
+    m_nameLabel->setFixedHeight(45);
+    m_timeLabel->setFixedHeight(45);
+
+    m_timeLabel->setMargin(5);
+    m_nameLabel->setMargin(5);
 
 	QVBoxLayout* layout = new QVBoxLayout();
-	layout->addWidget(m_nameLabel);
-	layout->addWidget(m_timeLabel);
+    layout->setMargin(0);
+    layout->setContentsMargins(0,0,0,0);
+    layout->setAlignment(Qt::AlignTop);
+    layout->setSpacing(0);
+    if(posUp){
+        layout->addWidget(m_nameLabel);
+        layout->addWidget(m_timeLabel);
+    }else{
+        layout->addWidget(m_timeLabel);
+        layout->addWidget(m_nameLabel);
+    }
+
 	setLayout(layout);
+    setMinimumWidth(208);
+    setMaximumWidth(480);
+    setFixedHeight(90);
 }
 
 void ChessClock::setPlayerName(const QString& name)
@@ -88,10 +118,8 @@ void ChessClock::setTime(int totalTime)
 void ChessClock::start(int totalTime)
 {
 	QPalette tmp = m_timeLabel->palette();
-	tmp.setColor(QPalette::WindowText,
-		     m_defaultPalette.color(QPalette::Window));
-	tmp.setColor(QPalette::Window,
-		     m_defaultPalette.color(QPalette::WindowText));
+    tmp.setColor(QPalette::WindowText,Qt::white);
+    tmp.setColor(QPalette::Window,Qt::red);
 	m_timeLabel->setPalette(tmp);
 
 	if (!m_infiniteTime)

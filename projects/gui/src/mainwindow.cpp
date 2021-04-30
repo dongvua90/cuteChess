@@ -70,7 +70,7 @@ MainWindow::MainWindow(ChessGame* game)
 	: m_game(nullptr),
 	  m_closing(false),
 	  m_readyToClose(false),
-	  m_firstTabAutoCloseEnabled(true)
+      m_firstTabAutoCloseEnabled(false)
 {
 	m_gameViewer = new GameViewer(Qt::Horizontal, nullptr, true);
 	for (int i = 0; i < 2; i++)
@@ -78,7 +78,7 @@ MainWindow::MainWindow(ChessGame* game)
 		Chess::Side side = Chess::Side::Type(i);
 		m_gameViewer->chessClock(side)->setPlayerName(side.toString());
 	}
-	m_gameViewer->setContentsMargins(6, 6, 6, 6);
+    m_gameViewer->setContentsMargins(0,0,0,0);
 
 	QVBoxLayout* mainLayout = new QVBoxLayout();
 	mainLayout->addWidget(m_gameViewer);
@@ -86,59 +86,35 @@ MainWindow::MainWindow(ChessGame* game)
 	// The content margins look stupid when used with dock widgets
 	mainLayout->setContentsMargins(0, 0, 0, 0);
 //myedit
-    QHBoxLayout *m_menu = new QHBoxLayout();
-    QPushButton *btn_flip=new QPushButton();
-    btn_flip->setText("Flip");
-    btn_flip->setCheckable(true);
-    connect(btn_flip,SIGNAL(clicked()),m_gameViewer->boardScene(),SLOT(flip()));
-    m_menu->addWidget(btn_flip);
+    //slot menu
+    menu = m_gameViewer->getMenu();
+    connect(menu,SIGNAL(onNewgame()),this,SLOT(onMenuNewgame()));
+    connect(menu,SIGNAL(onResign()),this,SLOT(resignGame()));
+    connect(menu,SIGNAL(onFlip()),m_gameViewer->boardScene(),SLOT(flip()));
+    connect(menu,SIGNAL(onSave()),this,SLOT(save()));
 
-    QPushButton *btn_newgame = new QPushButton();
-    btn_newgame->setText("New Game");
-    connect(btn_newgame,SIGNAL(clicked()),this,SLOT(newGame()));
-    m_menu->addWidget(btn_newgame);
-
-    QPushButton *btn_resign = new QPushButton();
-    btn_resign->setText("Resign");
-    m_menu->addWidget(btn_resign);
-    connect(btn_resign,SIGNAL(clicked()),this,SLOT(resignGame()));
-
-    QPushButton *btn_close = new QPushButton();
-    btn_close->setText("Close TabGame");
-    m_menu->addWidget(btn_close);
-    connect(btn_close,SIGNAL(clicked()), this,SLOT(myClose()));
-
-    QPushButton *btn_save = new QPushButton();
-    btn_save->setText("save");
-    m_menu->addWidget(btn_save);
-    connect(btn_save,SIGNAL(clicked()),this,SLOT(save()));
-
-    auto app = CuteChessApplication::instance();
-    QPushButton *btn_quit = new QPushButton();
-    btn_quit->setText("Quit");
-    m_menu->addWidget(btn_quit);
-    connect(btn_quit,&QPushButton::clicked,app,&CuteChessApplication::onQuitAction);
-
-
-
-
-    mainLayout->addLayout(m_menu);
-    MoveList *mlist = new MoveList();
-    mlist->setGame(game);
-    mainLayout->addWidget(mlist);
 //endmyedit
 
 	QWidget* mainWidget = new QWidget(this);
 	mainWidget->setLayout(mainLayout);
 	setCentralWidget(mainWidget);
+    mainWidget->setContentsMargins(0,0,0,0);
 
     createToolBars();
 
     connect(CuteChessApplication::instance()->gameManager(),
         SIGNAL(finished()), this, SLOT(onGameManagerFinished()),
         Qt::QueuedConnection);
-    readSettings();
-	addGame(game);
+
+    //edit
+//    addGame(game);
+    fristscreen = new FirstScreen();
+    beginPlayFriend = new BeginPlayFriend();
+    connect(fristscreen,SIGNAL(onCpuGame()),this,SLOT(newGame()));
+    connect(fristscreen,SIGNAL(onOnlineGame()),this,SLOT(onMenuNewgameOnline()));
+    connect(beginPlayFriend,&BeginPlayFriend::onPlayOnline,this,&MainWindow::newGameOnline);
+
+    fristscreen->show();
 }
 
 MainWindow::~MainWindow()
@@ -169,78 +145,39 @@ void MainWindow::createToolBars()
 	addToolBar(toolBar);
 }
 
-void MainWindow::readSettings()
-{
-	QSettings s;
-	s.beginGroup("ui");
-	s.beginGroup("mainwindow");
-
-	restoreGeometry(s.value("geometry").toByteArray());
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-	// Workaround for https://bugreports.qt.io/browse/QTBUG-16252
-	if (isMaximized())
-		setGeometry(QApplication::desktop()->availableGeometry(this));
-#endif
-	restoreState(s.value("window_state").toByteArray());
-
-	s.endGroup();
-	s.endGroup();
-}
-
-void MainWindow::writeSettings()
-{
-	QSettings s;
-	s.beginGroup("ui");
-	s.beginGroup("mainwindow");
-
-	s.setValue("geometry", saveGeometry());
-	s.setValue("window_state", saveState());
-
-	s.endGroup();
-	s.endGroup();
-}
-
 void MainWindow::addGame(ChessGame* game)
 {
-    Tournament* tournament = qobject_cast<Tournament*>(QObject::sender());
-    TabData tab(game, tournament);
+    m_gameViewer->mvlist->setGame(game);
+if(m_tabBar->count()>1){    // only show 2 tab .
+    closeCurrentGame();
+}
+    TabData tab(game);
 
-    if (tournament)
-    {
-        int index = tabIndex(tournament, true);
-        if (index != -1)
-        {
-            delete m_tabs[index].m_pgn;
-            m_tabs[index] = tab;
-
-            m_tabBar->setTabText(index, genericTitle(tab));
-            if (!m_closing && m_tabBar->currentIndex() == index)
-                setCurrentGame(tab);
-
-            return;
-        }
-    }
-    else
-        connect(game, SIGNAL(finished(ChessGame*)),
+    connect(game, SIGNAL(finished(ChessGame*)),
             this, SLOT(onGameFinished(ChessGame*)));
 
     m_tabs.append(tab);
     m_tabBar->setCurrentIndex(m_tabBar->addTab(genericTitle(tab)));
 
     // close initial tab if unused and if enabled by settings
-    if (m_tabs.size() >= 2
-    &&  m_firstTabAutoCloseEnabled)
+    if (m_tabs.size() >= 2 &&  m_firstTabAutoCloseEnabled)
     {
-        if (QSettings().value("ui/close_unused_initial_tab", true).toBool()
-        &&  !m_tabs[0].m_game.isNull()
+        qDebug()<<"AutoClose-true";
+        if (QSettings().value("ui/close_unused_initial_tab", true).toBool() &&
+        !m_tabs[0].m_game.isNull()
         &&  m_tabs[0].m_game.data()->moves().isEmpty())
+        {
+            qDebug("Closed tab init");
             closeTab(0);
-
+        }
         m_firstTabAutoCloseEnabled = false;
     }
 
-    if (m_tabs.size() >= 2)
-        m_tabBar->parentWidget()->show();
+    if (m_tabs.size() >= 2) //show tabview
+    {
+//         m_tabBar->parentWidget()->show();
+    }
+
 }
 
 void MainWindow::removeGame(int index)
@@ -256,6 +193,7 @@ void MainWindow::removeGame(int index)
 
 void MainWindow::destroyGame(ChessGame* game)
 {
+    qDebug()<<"destroyGame";
 	Q_ASSERT(game != nullptr);
 
 	int index = tabIndex(game);
@@ -269,7 +207,9 @@ void MainWindow::destroyGame(ChessGame* game)
     delete tab.m_pgn;
 
 	if (m_tabs.isEmpty())
+    {
 		close();
+    }
 }
 
 void MainWindow::setCurrentGame(const TabData& gameData)
@@ -282,7 +222,6 @@ void MainWindow::setCurrentGame(const TabData& gameData)
 		ChessPlayer* player(m_players[i]);
 		if (player != nullptr)
 		{
-//			disconnect(player, nullptr, m_engineDebugLog, nullptr);
 			disconnect(player, nullptr,
 			           m_gameViewer->chessClock(Chess::Side::White), nullptr);
 			disconnect(player, nullptr,
@@ -317,7 +256,6 @@ void MainWindow::setCurrentGame(const TabData& gameData)
 
 	lockCurrentGame();
 
-//	m_engineDebugLog->clear();
 
 //	m_moveList->setGame(m_game, gameData.m_pgn);
 
@@ -349,9 +287,6 @@ void MainWindow::setCurrentGame(const TabData& gameData)
 		Chess::Side side = Chess::Side::Type(i);
 		ChessPlayer* player(m_game->player(side));
 		m_players[i] = player;
-
-//		connect(player, SIGNAL(debugMessage(QString)),
-//			m_engineDebugLog, SLOT(appendPlainText(QString)));
 
 		auto clock = m_gameViewer->chessClock(side);
 
@@ -411,10 +346,18 @@ int MainWindow::tabIndex(Tournament* tournament, bool freeTab) const
 
 void MainWindow::onTabChanged(int index)
 {
+    qDebug()<<"onTabChanged:"<<index;
+
 	if (index == -1 || m_closing)
 		m_game = nullptr;
-	else
-		setCurrentGame(m_tabs.at(index));
+    else{
+        qDebug()<<"setCurentGame"<<index;
+        if(index==0){
+             setCurrentGame(m_tabs.at(index));
+        }else{
+          setCurrentGame(m_tabs.at(index));
+        }
+    }
 }
 
 void MainWindow::onTabCloseRequested(int index)
@@ -437,13 +380,14 @@ void MainWindow::closeTab(int index)
 	const TabData& tab = m_tabs.at(index);
 
 	if (tab.m_game == nullptr)
-	{
+    {
 		delete tab.m_pgn;
 		removeGame(index);
 
 		if (m_tabs.isEmpty())
+        {
 			close();
-
+        }
 		return;
 	}
 
@@ -466,9 +410,11 @@ void MainWindow::newGame()
 {
 //    EngineManager* engineManager = CuteChessApplication::instance()->engineManager();
     NewGameDialog dlg(this);
-    if (dlg.exec() != QDialog::Accepted)
+    if (dlg.exec() != QDialog::Accepted){
+         fristscreen->setVisible(true);
         return;
-
+    }
+    fristscreen->setVisible(false);
     auto game = dlg.createGame();
     if (!game)
     {
@@ -627,7 +573,6 @@ void MainWindow::onGameManagerFinished()
 void MainWindow::closeAllGames()
 {
 	auto app = CuteChessApplication::instance();
-//	app->closeDialogs();
 
 	for (int i = m_tabs.size() - 1; i >= 0; i--)
 		closeTab(i);
@@ -640,7 +585,6 @@ void MainWindow::closeEvent(QCloseEvent* event)
 {
 	if (m_readyToClose)
 	{
-		writeSettings();
 		QMainWindow::closeEvent(event);
 		return;
 	}
@@ -691,6 +635,67 @@ void MainWindow::myClose()
         focusMainWindow->closeCurrentGame();
         return;
     }
-
     focusWindow->close();
+}
+
+void MainWindow::onMenuNewgame()
+{
+    fristscreen->setVisible(true);
+}
+
+void MainWindow::onMenuNewgameOnline()
+{
+    beginPlayFriend->show();
+}
+
+void MainWindow::newGameOnline(int timer,int timeInc,QString variant,bool color,bool billELO,QString nickname)
+{
+    auto board = Chess::BoardFactory::create(variant);
+    auto pgn = new PgnGame();
+    pgn->setSite(QSettings().value("pgn/site").toString());
+    auto game = new ChessGame(board, pgn);
+
+    int timsum;
+    switch (timer) {
+        case 0: timsum=5; break;
+        case 1: timsum=10; break;
+        case 2: timsum=20; break;
+        case 3: timsum=30; break;
+        case 4: timsum=45; break;
+        case 5: timsum=60; break;
+        case 6: timsum=120; break;
+        case 7: timsum=180; break;
+        case 8: timsum=1000; break;
+    }
+
+    int tim;
+    switch (timeInc) {
+        case 0: tim=0; break;
+        case 1: tim=3; break;
+        case 2: tim=5; break;
+        case 3: tim=10; break;
+        case 4: tim=15; break;
+        case 5: tim=20; break;
+        case 6: tim=30; break;
+        case 7: tim=45; break;
+        case 8: tim=60; break;
+    }
+    QString stim=QString::number(timsum)+":00+"+QString::number(tim);
+        game->setTimeControl(TimeControl(stim));
+
+
+    PlayerBuilder* builders[2];
+    builders[0] = new HumanBuilder(CuteChessApplication::userName(), false);
+    builders[1] = new HumanBuilder(nickname, false);
+
+    if (builders[game->board()->sideToMove()]->isHuman())
+        game->pause();
+
+    // Start the game in a new tab
+    connect(game, SIGNAL(initialized(ChessGame*)),
+        this, SLOT(addGame(ChessGame*)));
+    connect(game, SIGNAL(startFailed(ChessGame*)),
+        this, SLOT(onGameStartFailed(ChessGame*)));
+    CuteChessApplication::instance()->gameManager()->newGame(game,
+        builders[Chess::Side::White], builders[Chess::Side::Black]);
 }

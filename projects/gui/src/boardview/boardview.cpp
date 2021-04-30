@@ -17,102 +17,12 @@
 */
 
 #include "boardview.h"
-#include <QPainter>
-#include <QResizeEvent>
-#include <QTimer>
-
 
 BoardView::BoardView(QGraphicsScene* scene, QWidget* parent)
-	: QGraphicsView(scene, parent),
-	  m_initialized(false),
-	  m_resizeTimer(new QTimer(this))
+    : QGraphicsView(scene, parent)
 {
-	setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-	setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-	setRenderHint(QPainter::Antialiasing);
-	setMouseTracking(true);
-
-	QSizePolicy sp(sizePolicy());
-	sp.setHeightForWidth(true);
-	setSizePolicy(sp);
-
-	m_resizeTimer->setSingleShot(true);
-	m_resizeTimer->setInterval(300);
-
-	connect(m_resizeTimer, SIGNAL(timeout()),
-		this, SLOT(fitToRect()));
-	connect(scene, SIGNAL(sceneRectChanged(QRectF)),
-		this, SLOT(onSceneRectChanged()));
-}
-
-QSize BoardView::sizeHint() const
-{
-	QSize size(sceneRect().size().toSize());
-	if (!size.isEmpty())
-		return size;
-
-	return QSize(200, 200);
-}
-
-int BoardView::heightForWidth(int width) const
-{
-	QSizeF size(sceneRect().size());
-	if (!size.isEmpty())
-	{
-		qreal ar = size.width() / size.height();
-		return width / ar;
-	}
-
-	return width;
-}
-
-void BoardView::paintEvent(QPaintEvent* event)
-{
-	if (!m_resizePixmap.isNull())
-	{
-		QRect rect(viewport()->rect());
-		qreal srcAr = qreal(m_resizePixmap.width()) / m_resizePixmap.height();
-		qreal trgAr = qreal(rect.width()) / rect.height();
-
-		if (srcAr > trgAr)
-			rect.setHeight(rect.width() / srcAr);
-		else if (srcAr < trgAr)
-			rect.setWidth(rect.height() * srcAr);
-		rect.moveCenter(viewport()->rect().center());
-
-		QPainter painter(viewport());
-		painter.drawPixmap(rect, m_resizePixmap);
-	}
-	else
-		QGraphicsView::paintEvent(event);
-}
-
-void BoardView::resizeEvent(QResizeEvent* event)
-{
-	QGraphicsView::resizeEvent(event);
-	if (!m_initialized)
-		return;
-
-	if (m_resizePixmap.isNull())
-	{
-		m_resizePixmap = QPixmap(sceneRect().toRect().size());
-		m_resizePixmap.fill(Qt::transparent);
-		QPainter painter(&m_resizePixmap);
-		scene()->render(&painter);
-	}
-
-	m_resizeTimer->start();
-}
-
-void BoardView::fitToRect()
-{
-	m_initialized = true;
-	m_resizePixmap = QPixmap();
-	fitInView(sceneRect(), Qt::KeepAspectRatio);
-}
-
-void BoardView::onSceneRectChanged()
-{
-	updateGeometry();
-	fitToRect();
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    setRenderHint(QPainter::Antialiasing);
+    setMouseTracking(true);
 }

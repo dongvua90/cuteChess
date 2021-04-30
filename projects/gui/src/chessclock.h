@@ -30,7 +30,7 @@ class ChessClock: public QWidget
 	Q_OBJECT
 	
 	public:
-		ChessClock(QWidget* parent = nullptr);
+        ChessClock(bool posUp,QWidget* parent = nullptr);
 	
 	public slots:
 		void setPlayerName(const QString& name);
@@ -52,6 +52,7 @@ class ChessClock: public QWidget
 		QLabel* m_nameLabel;
 		QLabel* m_timeLabel;
 		QPalette m_defaultPalette;
+        QPalette m_headerPalette;
 };
 
 #endif // CHESSCLOCK

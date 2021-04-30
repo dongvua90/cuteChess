@@ -73,6 +73,13 @@ class BoardScene : public QGraphicsScene
 		 * best to give the scene its own copy of a board.
 		 */
 		void setBoard(Chess::Board* board);
+        //edit
+        void stopAnimation();
+        GraphicsBoard* m_squares;
+        GraphicsPiece* pieceAt(const QPointF& pos) const;
+        QMultiMap<GraphicsPiece*, Chess::Square> m_targets;
+        QPointF m_sourcePos;
+        void tryMove(GraphicsPiece* piece, const QPointF& targetPos);
 
 	public slots:
 		/*!
@@ -130,12 +137,9 @@ class BoardScene : public QGraphicsScene
 		};
 
 		QPointF squarePos(const Chess::Square& square) const;
-		GraphicsPiece* pieceAt(const QPointF& pos) const;
 		GraphicsPiece* createPiece(const Chess::Piece& piece);
 		QPropertyAnimation* pieceAnimation(GraphicsPiece* piece,
 						   const QPointF& endPoint) const;
-		void stopAnimation();
-		void tryMove(GraphicsPiece* piece, const QPointF& targetPos);
 		void selectPiece(const QList<Chess::Piece>& types,
 				 const char* member);
 		void addMoveArrow(const QPointF& sourcePos,
@@ -148,13 +152,9 @@ class BoardScene : public QGraphicsScene
 		MoveDirection m_direction;
 		Chess::BoardTransition m_transition;
 		QList<Chess::BoardTransition> m_history;
-		QPointF m_sourcePos;
-		GraphicsBoard* m_squares;
 		GraphicsPieceReserve* m_reserve;
 		QPointer<PieceChooser> m_chooser;
 		QPointer<QAbstractAnimation> m_anim;
-		QSvgRenderer* m_renderer;
-		QMultiMap<GraphicsPiece*, Chess::Square> m_targets;
 		QList<Chess::GenericMove> m_moves;
 		Chess::GenericMove m_promotionMove;
 		GraphicsPiece* m_highlightPiece;

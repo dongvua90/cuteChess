@@ -30,37 +30,31 @@
 #include "boardview/boardview.h"
 #include "chessclock.h"
 
+#include <QPushButton>
+#include <QLabel>
+#include <QDebug>
+#include "boardview/graphicsboard.h"
+#include "boardview/graphicspiece.h"
+#include <board/board.h>
+
+
 GameViewer::GameViewer(Qt::Orientation orientation,
                        QWidget* parent,
                        bool addChessClock)
 	: QWidget(parent),
-	  m_moveNumberSlider(new QSlider(Qt::Horizontal)),
-	  m_viewFirstMoveBtn(new QToolButton),
 	  m_viewPreviousMoveBtn(new QToolButton),
 	  m_viewNextMoveBtn(new QToolButton),
-	  m_viewLastMoveBtn(new QToolButton),
 	  m_moveIndex(0),
-	  m_humanGame(false)
+      m_humanGame(false)
 {
-	#ifdef Q_OS_MAC
-	setStyleSheet("QToolButton:!hover { border: none; }");
-	#endif
-
+    menu = new MenuScreen();
 	m_boardScene = new BoardScene(this);
 	m_boardView = new BoardView(m_boardScene, this);
 	m_boardView->setEnabled(false);
 
-	m_viewFirstMoveBtn->setEnabled(false);
-	m_viewFirstMoveBtn->setAutoRaise(true);
-	m_viewFirstMoveBtn->setMinimumSize(32, 32);
-	m_viewFirstMoveBtn->setToolTip(tr("Skip to the beginning"));
-	m_viewFirstMoveBtn->setIcon(QIcon(":/icons/toolbutton/first_16x16"));
-	connect(m_viewFirstMoveBtn, SIGNAL(clicked()),
-		this, SLOT(viewFirstMoveClicked()));
-
 	m_viewPreviousMoveBtn->setEnabled(false);
 	m_viewPreviousMoveBtn->setAutoRaise(true);
-	m_viewPreviousMoveBtn->setMinimumSize(32, 32);
+    m_viewPreviousMoveBtn->setMinimumSize(32, 32);
 	m_viewPreviousMoveBtn->setToolTip(tr("Previous move"));
 	m_viewPreviousMoveBtn->setIcon(QIcon(":/icons/toolbutton/previous_16x16"));
 	connect(m_viewPreviousMoveBtn, SIGNAL(clicked()),
@@ -68,77 +62,108 @@ GameViewer::GameViewer(Qt::Orientation orientation,
 
 	m_viewNextMoveBtn->setEnabled(false);
 	m_viewNextMoveBtn->setAutoRaise(true);
-	m_viewNextMoveBtn->setMinimumSize(32, 32);
+    m_viewNextMoveBtn->setMinimumSize(32, 32);
 	m_viewNextMoveBtn->setToolTip(tr("Next move"));
 	m_viewNextMoveBtn->setIcon(QIcon(":/icons/toolbutton/next_16x16"));
 	connect(m_viewNextMoveBtn, SIGNAL(clicked()),
 		this, SLOT(viewNextMoveClicked()));
 
-	m_viewLastMoveBtn->setEnabled(false);
-	m_viewLastMoveBtn->setAutoRaise(true);
-	m_viewLastMoveBtn->setMinimumSize(32, 32);
-	m_viewLastMoveBtn->setToolTip(tr("Skip to the end"));
-	m_viewLastMoveBtn->setIcon(QIcon(":/icons/toolbutton/last_16x16"));
-	connect(m_viewLastMoveBtn, SIGNAL(clicked()),
-		this, SLOT(viewLastMoveClicked()));
-
-	m_moveNumberSlider->setEnabled(false);
-	#ifdef Q_OS_WIN
-	m_moveNumberSlider->setMinimumHeight(18);
-	#endif
-	connect(m_moveNumberSlider, SIGNAL(valueChanged(int)),
-		this, SLOT(viewPositionClicked(int)));
-
 	QHBoxLayout* controls = new QHBoxLayout();
 	controls->setContentsMargins(0, 0, 0, 0);
 	controls->setSpacing(0);
-	controls->addWidget(m_viewFirstMoveBtn);
 	controls->addWidget(m_viewPreviousMoveBtn);
-	controls->addWidget(m_viewNextMoveBtn);
-	controls->addWidget(m_viewLastMoveBtn);
+    controls->addWidget(m_viewNextMoveBtn);
 
-	QVBoxLayout* layout = new QVBoxLayout();
+
+
+    //begin add layout main
+    setFixedSize(750,272);
+
+    QHBoxLayout* layout = new QHBoxLayout();
 	layout->setContentsMargins(0, 0, 0, 0);
+    layout->setAlignment(Qt::AlignLeft);
 
-	if (addChessClock)
-	{
-		QHBoxLayout* clockLayout = new QHBoxLayout();
-		for (int i = 0; i < 2; i++)
-		{
-			m_chessClock[i] = new ChessClock();
-			clockLayout->addWidget(m_chessClock[i]);
-		}
-		clockLayout->insertSpacing(1, 20);
-		layout->addLayout(clockLayout);
-	}
-	else
-	{
-		m_chessClock[0] = nullptr;
-		m_chessClock[1] = nullptr;
-	}
+    m_boardView->setFixedSize(272,272);
+    layout->addWidget(m_boardView);
 
-	layout->addWidget(m_boardView);
+    QVBoxLayout* clockLayout = new QVBoxLayout();
 
-	if (orientation == Qt::Horizontal)
-	{
-		controls->addSpacing(6);
-		controls->addWidget(m_moveNumberSlider);
-	}
-	else
-	{
-		layout->addWidget(m_moveNumberSlider);
+    m_chessClock[0] = new ChessClock(true);
+    clockLayout->addWidget(m_chessClock[0]);
+// begin add mid layout
+    QHBoxLayout *midLayout = new QHBoxLayout();
+    midLayout->setMargin(0);
+    midLayout->setContentsMargins(0,0,0,0);
+    midLayout->setSpacing(0);
 
-		controls->insertStretch(0);
-		controls->addStretch();
-	}
 
-	layout->addLayout(controls);
+//    clockLayout->addLayout(controls);
+
+    // btn extern
+    btn_extern = new QPushButton();
+//    btn_extern->setText("<<");
+    btn_extern->setFixedWidth(30);
+    btn_extern->setFixedHeight(92);
+    btn_extern->setStyleSheet("QPushButton{background-color:pink; border-radius:0px;font:20px;}"
+    "QPushButton:checked{background-color:red; border-radius:0px;}");
+    btn_extern->setCheckable(true);
+    btn_extern->setIcon(QIcon(":/icons/toolbutton/previous_16x16"));
+    connect(btn_extern,&QPushButton::clicked,this,&GameViewer::onExternClicked);
+
+    //MoveList
+    mvlist =new MoveList();
+
+
+
+    //btn menu
+    btn_menu = new QPushButton();
+    btn_menu->setText("M");
+    btn_menu->setFixedWidth(30);
+    btn_menu->setFixedHeight(92);
+    btn_menu->setStyleSheet("QPushButton{background-color:pink; border-radius:0px;font:20px;}QPushButton:pressed{background-color:red; border-radius:0px;}");
+    connect(btn_menu,SIGNAL(clicked()),this,SLOT(onMenuClicked()));
+
+    midLayout->addWidget(btn_extern);
+//    midLayout->addWidget(lb_move);
+    midLayout->addWidget(mvlist);
+    midLayout->addWidget(btn_menu);
+
+    clockLayout->addLayout(midLayout);
+//end of mid layout
+
+    m_chessClock[1] = new ChessClock(false);
+    clockLayout->addWidget(m_chessClock[1]);
+    clockLayout->setContentsMargins(0,0,0,0);
+    clockLayout->setSpacing(0);
+    clockLayout->setMargin(0);
+
+    layout->addLayout(clockLayout);
 	setLayout(layout);
+//debug
+    text_move = new QLineEdit();
+    text_move->setMinimumWidth(100);
+    QPushButton *btn_move = new QPushButton();
+    btn_move->setText("move");
+    QVBoxLayout *layout_debug = new QVBoxLayout();
+    layout_debug->addWidget(text_move);
+    layout_debug->addWidget(btn_move);
+    layout->addLayout(layout_debug);
+    connect(btn_move,SIGNAL(clicked()),this,SLOT(makemove()));
+
+    QPushButton *btn_debug = new QPushButton();
+    btn_debug->setText("debug");
+    connect(btn_debug,SIGNAL(clicked()),this,SLOT(onDebug()));
+    layout_debug->addWidget(btn_debug);
 }
 
 ChessClock* GameViewer::chessClock(Chess::Side side)
 {
-	return m_chessClock[side];
+    return m_chessClock[side];
+}
+
+MenuScreen *GameViewer::getMenu()
+{
+    return menu;
 }
 
 void GameViewer::autoFlip()
@@ -150,7 +175,8 @@ void GameViewer::autoFlip()
 void GameViewer::setGame(ChessGame* game)
 {
 	Q_ASSERT(game != nullptr);
-
+    //test
+    mygame = game;
 	setGame(game->pgn());
 	m_game = game;
 
@@ -204,15 +230,8 @@ void GameViewer::setGame(const PgnGame* pgn)
 	m_moves.clear();
 	for (const PgnGame::MoveData& md : pgn->moves())
 		m_moves.append(md.move);
-
-	m_viewFirstMoveBtn->setEnabled(false);
 	m_viewPreviousMoveBtn->setEnabled(false);
 	m_viewNextMoveBtn->setEnabled(!m_moves.isEmpty());
-	m_viewLastMoveBtn->setEnabled(!m_moves.isEmpty());
-
-	m_moveNumberSlider->setEnabled(!m_moves.isEmpty());
-	m_moveNumberSlider->setMaximum(m_moves.count());
-	m_moveNumberSlider->setValue(0);
 
 	viewLastMove();
 }
@@ -272,16 +291,12 @@ void GameViewer::viewPreviousMove()
 	if (m_moveIndex == 0)
 	{
 		m_viewPreviousMoveBtn->setEnabled(false);
-		m_viewFirstMoveBtn->setEnabled(false);
 	}
 
 	m_boardScene->undoMove();
 
 	m_viewNextMoveBtn->setEnabled(true);
-	m_viewLastMoveBtn->setEnabled(true);
 	m_boardView->setEnabled(false);
-
-	m_moveNumberSlider->setSliderPosition(m_moveIndex);
 }
 
 void GameViewer::viewNextMoveClicked()
@@ -295,19 +310,15 @@ void GameViewer::viewNextMove()
 	m_boardScene->makeMove(m_moves.at(m_moveIndex++));
 
 	m_viewPreviousMoveBtn->setEnabled(true);
-	m_viewFirstMoveBtn->setEnabled(true);
 
 	if (m_moveIndex >= m_moves.count())
 	{
 		m_viewNextMoveBtn->setEnabled(false);
-		m_viewLastMoveBtn->setEnabled(false);
 
 		if (!m_game.isNull()
 		&&  !m_game->isFinished() && m_game->playerToMove()->isHuman())
 			m_boardView->setEnabled(true);
 	}
-
-	m_moveNumberSlider->setSliderPosition(m_moveIndex);
 }
 
 void GameViewer::viewLastMoveClicked()
@@ -366,13 +377,8 @@ void GameViewer::onFenChanged(const QString& fen)
 	m_moves.clear();
 	m_moveIndex = 0;
 
-	m_viewFirstMoveBtn->setEnabled(false);
 	m_viewPreviousMoveBtn->setEnabled(false);
 	m_viewNextMoveBtn->setEnabled(false);
-	m_viewLastMoveBtn->setEnabled(false);
-	m_moveNumberSlider->setEnabled(false);
-	m_moveNumberSlider->setMaximum(0);
-
 	m_boardScene->setFenString(fen);
 }
 
@@ -380,12 +386,61 @@ void GameViewer::onMoveMade(const Chess::GenericMove& move)
 {
 	m_moves.append(move);
 
-	m_moveNumberSlider->setEnabled(true);
-	m_moveNumberSlider->setMaximum(m_moves.count());
-
 	if (m_moveIndex == m_moves.count() - 1)
 		viewNextMove();
 
 	if (m_humanGame)
-		autoFlip();
+        autoFlip();
 }
+
+void GameViewer::onExternClicked(bool checked)
+{
+    if(checked){
+        btn_extern->setIcon(QIcon(":/icons/toolbutton/next_16x16"));
+        m_boardView->setFixedWidth(0);
+    }else{
+        btn_extern->setIcon(QIcon(":/icons/toolbutton/previous_16x16"));
+        m_boardView->setFixedWidth(272);
+    }
+}
+
+void GameViewer::onMenuClicked()
+{
+    menu->show();
+}
+
+void GameViewer::makemove()
+{
+    QString move = text_move->text();
+    QPoint from,to;
+    from.setX(move.mid(0,1).toInt()*34 -119);
+    from.setY(119 - move.mid(1,1).toInt()*34);
+    to.setX(move.mid(2,1).toInt()*34 -119);
+    to.setY(119 - move.mid(3,1).toInt()*34);
+    qDebug()<<"point:from:"<<from.x()<<"-"<<from.y()<<" to "<<to.x()<<"-"<<to.y();
+
+
+    m_boardScene->stopAnimation();
+    GraphicsPiece* piece = m_boardScene->pieceAt(from);
+    if (piece == nullptr) // nếu vị trí move_from ko phải là quân cờ thì di chuyển lỗi
+        return;
+
+    if (m_boardScene->m_targets.contains(piece))
+    {
+        m_boardScene->m_sourcePos = piece->scenePos();
+        piece->setParentItem(nullptr);
+        piece->setPos(m_boardScene->m_sourcePos);
+    }
+    m_boardScene->tryMove(piece, to);
+
+}
+
+void GameViewer::onDebug()
+{
+
+   qDebug()<<"Fen:";
+    m_boardScene->populate();
+    GraphicsPiece *mpiece = m_boardScene->pieceAt(QPoint(85,85));
+    mpiece->setOpacity(0.3f);
+}
+

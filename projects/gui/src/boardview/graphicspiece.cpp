@@ -17,20 +17,19 @@
 */
 
 #include "graphicspiece.h"
-#include <QSvgRenderer>
-
-
+#include <QPainter>
+#include <QDebug>
+#include <QPixmap>
+#include <QImage>
 GraphicsPiece::GraphicsPiece(const Chess::Piece& piece,
 			     qreal squareSize,
 			     const QString& elementId,
-			     QSvgRenderer* renderer,
 			     QGraphicsItem* parent)
 	: QGraphicsObject(parent),
 	  m_piece(piece),
-	  m_rect(-squareSize / 2, -squareSize / 2,
-		  squareSize, squareSize),
+      m_rect(-squareSize / 2, -squareSize / 2,
+          squareSize, squareSize),
 	  m_elementId(elementId),
-	  m_renderer(renderer),
 	  m_container(nullptr)
 {
 	setAcceptedMouseButtons(Qt::LeftButton);
@@ -44,7 +43,7 @@ int GraphicsPiece::type() const
 
 QRectF GraphicsPiece::boundingRect() const
 {
-	return m_rect;
+    return m_rect;
 }
 
 void GraphicsPiece::paint(QPainter* painter,
@@ -54,23 +53,33 @@ void GraphicsPiece::paint(QPainter* painter,
 	Q_UNUSED(option);
 	Q_UNUSED(widget);
 
-	QRectF bounds(m_renderer->boundsOnElement(m_elementId));
-	qreal ar = bounds.width() / bounds.height();
-	qreal width = m_rect.width() * 0.8;
-
-	if (ar > 1.0)
-	{
-		bounds.setWidth(width);
-		bounds.setHeight(width / ar);
-	}
-	else
-	{
-		bounds.setHeight(width);
-		bounds.setWidth(width * ar);
-	}
-	bounds.moveCenter(m_rect.center());
-
-	m_renderer->render(painter, m_elementId, bounds);
+    QPixmap map;
+    if(m_elementId =="R"){
+        map.load(":/piece/wrook.png");
+    }else if(m_elementId == "r"){
+        map.load(":/piece/brook.png");
+    }else if(m_elementId == "N"){
+        map.load(":/piece/wknight.png");
+    }else if(m_elementId == "n"){
+        map.load(":/piece/bknight.png");
+    }else if(m_elementId == "B"){
+        map.load(":/piece/wbishop.png");
+    }else if(m_elementId == "b"){
+        map.load(":/piece/bbishop.png");
+    }else if(m_elementId == "Q"){
+        map.load(":/piece/wqueen.png");
+    }else if(m_elementId == "q"){
+        map.load(":/piece/bqueen.png");
+    }else if(m_elementId == "K"){
+        map.load(":/piece/wking.png");
+    }else if(m_elementId == "k"){
+        map.load(":/piece/bking.png");
+    }else if(m_elementId == "P"){
+        map.load(":/piece/wpawn.png");
+    }else if(m_elementId == "p"){
+        map.load(":/piece/bpawn.png");
+    }
+    painter->drawPixmap(-17,-17,34,34,map);
 }
 
 Chess::Piece GraphicsPiece::pieceType() const

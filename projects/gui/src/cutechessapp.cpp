@@ -44,8 +44,6 @@ CuteChessApplication::CuteChessApplication(int& argc, char* argv[])
 	  m_initialWindowCreated(false)
 {
 	Mersenne::initialize(QTime(0,0,0).msecsTo(QTime::currentTime()));
-
-//	setQuitOnLastWindowClosed(false);
 }
 
 CuteChessApplication::~CuteChessApplication()
@@ -78,6 +76,7 @@ GameManager* CuteChessApplication::gameManager()
 
 MainWindow* CuteChessApplication::newGameWindow(ChessGame* game)
 {
+    qDebug()<<"newGameWindown";
 	MainWindow* mainWindow = new MainWindow(game);
 	mainWindow->show();
     return mainWindow;
@@ -108,6 +107,7 @@ void CuteChessApplication::onQuitAction()
 
 void CuteChessApplication::onLastWindowClosed()
 {
+    qDebug()<<"onLastWindownCloded";
 	if (!m_initialWindowCreated)
 		return;
 
