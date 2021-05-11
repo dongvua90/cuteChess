@@ -73,6 +73,9 @@ class GraphicsPiece : public QGraphicsObject
 		QGraphicsItem* container() const;
 		/*! Sets the container to \a item. */
 		void setContainer(QGraphicsItem* item);
+        // set error piece
+        void setPieceError(bool err);
+        bool getPieceError();
 
 	public slots:
 		/*!

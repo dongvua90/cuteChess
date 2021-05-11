@@ -75,8 +75,6 @@ class NewGameDialog : public QDialog
 
         void on_slider_skillLevel_valueChanged(int value);
 
-        void on_slider_uciElo_valueChanged(int value);
-
         void on_btn_limitStrength_toggled(bool checked);
 
         void on_btn_close_clicked();

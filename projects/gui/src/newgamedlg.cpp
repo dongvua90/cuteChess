@@ -42,7 +42,7 @@ NewGameDialog::NewGameDialog(QWidget* parent)
 {
 	ui->setupUi(this);
 
-
+    move(0,0);
     ui->comboBox_variant->addItem("standard");
     ui->comboBox_variant->addItem("atomic");
     ui->comboBox_variant->addItem("kingofthehill");
@@ -54,31 +54,24 @@ NewGameDialog::NewGameDialog(QWidget* parent)
     setTimeInc(m_timeInc);
     ui->slider_timeInc->setValue(m_timeInc);
     ui->slider_timer->setValue(m_timer);
-    ui->slider_skillLevel->setValue(m_skillLevel);
-    ui->slider_uciElo->setValue(m_elo);
-    ui->lb_skillLevel->setText(QString::number(m_skillLevel));
-    ui->lb_ucielo->setText(QString::number(m_elo));
-    ui->btn_playerColor->setChecked(m_color);
-    ui->btn_limitStrength->setChecked(m_limitStrenger);
-    on_btn_playerColor_toggled(m_color);
 
-    //setvisibale Skill level & UCI
-    if(ui->btn_limitStrength->isChecked())
-    {
-        ui->labelUCI->setVisible(false);
-        ui->slider_uciElo->setVisible(false);
-        ui->lb_ucielo->setVisible(false);
-        ui->labelSkillLevel->setVisible(true);
-        ui->slider_skillLevel->setVisible(true);
-        ui->lb_skillLevel->setVisible(true);
+    ui->btn_playerColor->setChecked(m_color);
+
+    ui->btn_limitStrength->setChecked(m_limitStrenger);
+    if(m_limitStrenger ==false){
+        ui->labelSkillLevel->setText("Skill Level");
+        ui->slider_skillLevel->setValue(m_skillLevel);
+        ui->slider_skillLevel->setMinimum(0);
+        ui->slider_skillLevel->setMaximum(10);
+        ui->lb_skillLevel->setText(QString::number(m_skillLevel));
     }else{
-        ui->labelUCI->setVisible(true);
-        ui->slider_uciElo->setVisible(true);
-        ui->lb_ucielo->setVisible(true);
-        ui->labelSkillLevel->setVisible(false);
-        ui->slider_skillLevel->setVisible(false);
-        ui->lb_skillLevel->setVisible(false);
+        ui->labelSkillLevel->setText("UCI-ELO");
+        ui->slider_skillLevel->setValue(m_elo);
+        ui->slider_skillLevel->setMinimum(1150);
+        ui->slider_skillLevel->setMaximum(2400);
+        ui->lb_skillLevel->setText(QString::number(m_elo));
     }
+    on_btn_playerColor_toggled(m_color);
 }
 
 NewGameDialog::~NewGameDialog()
@@ -93,17 +86,17 @@ ChessGame* NewGameDialog::createGame() const
 	pgn->setSite(QSettings().value("pgn/site").toString());
 	auto game = new ChessGame(board, pgn);
 
-    int timsum;
+    int timsum,engine_timeMin=0,engine_timeSec=0;
     switch (m_timer) {
-        case 0: timsum=5; break;
-        case 1: timsum=10; break;
-        case 2: timsum=20; break;
-        case 3: timsum=30; break;
-        case 4: timsum=45; break;
-        case 5: timsum=60; break;
-        case 6: timsum=120; break;
-        case 7: timsum=180; break;
-        case 8: timsum=1000; break;
+        case 0: timsum=5;engine_timeMin=0;engine_timeSec=15; break;
+        case 1: timsum=10;engine_timeMin=0;engine_timeSec=30; break;
+        case 2: timsum=20;engine_timeMin=1;engine_timeSec=0; break;
+        case 3: timsum=30;engine_timeMin=1;engine_timeSec=30; break;
+        case 4: timsum=45;engine_timeMin=1;engine_timeSec=45; break;
+        case 5: timsum=60;engine_timeMin=2;engine_timeSec=0; break;
+        case 6: timsum=120;engine_timeMin=3;engine_timeSec=0; break;
+        case 7: timsum=180;engine_timeMin=5;engine_timeSec=0; break;
+        case 8: timsum=1000;engine_timeMin=10;engine_timeSec=0; break;
     }
 
     int tim;
@@ -118,8 +111,19 @@ ChessGame* NewGameDialog::createGame() const
         case 7: tim=45; break;
         case 8: tim=60; break;
     }
-    QString stim=QString::number(timsum)+":00+"+QString::number(tim);
-        game->setTimeControl(TimeControl(stim));
+    QString human_tim=QString::number(timsum)+":00+"+QString::number(tim);
+
+    QString engine_tim=QString::number(engine_timeMin)+":"+QString::number(engine_timeSec);
+    Chess::Side human_side,engine_side;
+    if(m_color){
+        human_side = Chess::Side::Black;
+        engine_side = Chess::Side::White;
+    }else{
+       human_side = Chess::Side::White;
+       engine_side=Chess::Side::Black;
+    }
+        game->setTimeControl(TimeControl(human_tim),human_side);
+        game->setTimeControl(TimeControl("1:00"),engine_side);
 
 
 
@@ -131,18 +135,18 @@ PlayerBuilder* NewGameDialog::createPlayerBuilder(Chess::Side side) const
 	if (playerType(side) == CPU)
 	{
         EngineConfiguration config;
-        config.setWorkingDirectory("/home/pika/Documents/LicheePiZero/QtProject/Stockfish/src");
-        config.setCommand("./stockfish");
+        config.setWorkingDirectory("/");
+        config.setCommand("./CT800_V1.42");
         config.setProtocol("uci");
-        config.setOption("nodestime","1");
+        config.setOption("Move Overhead [ms]","50");
         config.setOption("Hash","1");
-        config.setOption("Skill Level",QString::number(m_skillLevel));
-        if(m_limitStrenger){
-            config.setOption("UCI_LimitStrength","true");
-            config.setOption("UCI_Elo",QString::number(m_elo));
-        }else{
-            config.setOption("UCI_LimitStrength","false");
-        }
+        config.setOption("CPU Speed [%]","1");
+//        if(m_limitStrenger){
+//            config.setOption("UCI_LimitStrength","true");
+//            config.setOption("UCI_Elo",QString::number(m_elo));
+//        }else{
+//            config.setOption("UCI_LimitStrength","false");
+//        }
 
 		return new EngineBuilder(config);
 	}
@@ -284,36 +288,32 @@ void NewGameDialog::on_slider_timeInc_valueChanged(int value)
 
 void NewGameDialog::on_slider_skillLevel_valueChanged(int value)
 {
-    m_skillLevel = value;
-    ui->lb_skillLevel->setText(QString::number(m_skillLevel));
+    if(m_limitStrenger){
+        m_elo = value;
+        ui->lb_skillLevel->setText(QString::number(m_elo));
+    }else{
+        m_skillLevel = value;
+        ui->lb_skillLevel->setText(QString::number(m_skillLevel));
+    }
+
 }
 
-void NewGameDialog::on_slider_uciElo_valueChanged(int value)
-{
-    m_elo = value;
-    ui->lb_ucielo->setText(QString::number(m_elo));
-}
 
 void NewGameDialog::on_btn_limitStrength_toggled(bool checked)
 {
     m_limitStrenger = checked;
-    if(checked)
-    {
-        ui->btn_limitStrength->setText("Full Strength");
-        ui->labelUCI->setVisible(false);
-        ui->slider_uciElo->setVisible(false);
-        ui->lb_ucielo->setVisible(false);
-        ui->labelSkillLevel->setVisible(true);
-        ui->slider_skillLevel->setVisible(true);
-        ui->lb_skillLevel->setVisible(true);
+    if(m_limitStrenger==false){
+        ui->labelSkillLevel->setText("Skill Level");
+        ui->slider_skillLevel->setValue(m_skillLevel);
+        ui->slider_skillLevel->setMinimum(0);
+        ui->slider_skillLevel->setMaximum(10);
+        ui->lb_skillLevel->setText(QString::number(m_skillLevel));
     }else{
-        ui->btn_limitStrength->setText("Limit Strength");
-        ui->labelUCI->setVisible(true);
-        ui->slider_uciElo->setVisible(true);
-        ui->lb_ucielo->setVisible(true);
-        ui->labelSkillLevel->setVisible(false);
-        ui->slider_skillLevel->setVisible(false);
-        ui->lb_skillLevel->setVisible(false);
+        ui->labelSkillLevel->setText("UCI-ELO");
+        ui->slider_skillLevel->setValue(m_elo);
+        ui->slider_skillLevel->setMinimum(1150);
+        ui->slider_skillLevel->setMaximum(2400);
+        ui->lb_skillLevel->setText(QString::number(m_elo));
     }
 }
 

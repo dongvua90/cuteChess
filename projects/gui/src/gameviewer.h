@@ -27,6 +27,7 @@
 #include <QPushButton>
 #include "menuscreen.h"
 #include "movelist.h"
+#include "robot.h"
 #include <QLineEdit>
 class QToolButton;
 class QSlider;
@@ -62,6 +63,8 @@ class GameViewer : public QWidget
 	public slots:
 		void viewMove(int index, bool keyLeft = false);
 
+         void makemove(uint8_t qFrom,uint8_t qTo,enum Robot::MOVETYPE move_type);
+
 	signals:
 		void moveSelected(int moveNumber);
 
@@ -78,7 +81,7 @@ class GameViewer : public QWidget
         void onExternClicked(bool checked);
         void onMenuClicked();
 
-        void makemove();
+
         void onDebug();
 
 	private:

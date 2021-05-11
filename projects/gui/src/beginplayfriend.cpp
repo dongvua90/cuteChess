@@ -3,7 +3,7 @@
 #include <QSettings>
 #include <QDebug>
 
-BeginPlayFriend::BeginPlayFriend() : QDialog()
+BeginPlayFriend::BeginPlayFriend(QWidget *parent) : QDialog(parent)
   ,ui(new Ui::BeginGameonline)
 {
     ui->setupUi(this);

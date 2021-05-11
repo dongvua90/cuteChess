@@ -11,7 +11,7 @@ class MenuScreen : public QDialog
 {
     Q_OBJECT
 public:
-    MenuScreen();
+    MenuScreen(QWidget *parent);
  signals:
     void onNewgame();
     void onDraw();

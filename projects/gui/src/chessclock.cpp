@@ -21,6 +21,7 @@
 #include <QTimerEvent>
 #include <QLabel>
 #include <QVBoxLayout>
+#include <QDebug>
 
 
 ChessClock::ChessClock(bool posUp,QWidget* parent)

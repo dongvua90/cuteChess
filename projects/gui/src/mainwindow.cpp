@@ -30,6 +30,8 @@
 #include <QClipboard>
 #include <QWindow>
 #include <QSettings>
+#include "boardview/boardscene.h"
+#include <chessgame.h>
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
 #include <QDesktopWidget>
 #endif
@@ -67,11 +69,13 @@ MainWindow::TabData::TabData(ChessGame* game, Tournament* tournament)
 }
 
 MainWindow::MainWindow(ChessGame* game)
-	: m_game(nullptr),
+    : m_game(nullptr),
 	  m_closing(false),
 	  m_readyToClose(false),
       m_firstTabAutoCloseEnabled(false)
 {
+    setFixedSize(480,272);
+    move(0,0);
 	m_gameViewer = new GameViewer(Qt::Horizontal, nullptr, true);
 	for (int i = 0; i < 2; i++)
 	{
@@ -93,11 +97,13 @@ MainWindow::MainWindow(ChessGame* game)
     connect(menu,SIGNAL(onFlip()),m_gameViewer->boardScene(),SLOT(flip()));
     connect(menu,SIGNAL(onSave()),this,SLOT(save()));
 
+
+
 //endmyedit
 
 	QWidget* mainWidget = new QWidget(this);
 	mainWidget->setLayout(mainLayout);
-	setCentralWidget(mainWidget);
+    setCentralWidget(mainWidget);
     mainWidget->setContentsMargins(0,0,0,0);
 
     createToolBars();
@@ -108,13 +114,21 @@ MainWindow::MainWindow(ChessGame* game)
 
     //edit
 //    addGame(game);
-    fristscreen = new FirstScreen();
-    beginPlayFriend = new BeginPlayFriend();
+    fristscreen = new FirstScreen(this);
+    beginPlayFriend = new BeginPlayFriend(this);
     connect(fristscreen,SIGNAL(onCpuGame()),this,SLOT(newGame()));
     connect(fristscreen,SIGNAL(onOnlineGame()),this,SLOT(onMenuNewgameOnline()));
     connect(beginPlayFriend,&BeginPlayFriend::onPlayOnline,this,&MainWindow::newGameOnline);
 
-    fristscreen->show();
+    fristscreen->exec();
+
+    robot = CuteChessApplication::instance()->getIntanceRobot();
+
+    threadIr = CuteChessApplication::instance()->getIntanceThreadIr();
+    connect(threadIr,&ThreadIR::onHumanEnter,robot,&Robot::humanEnter);
+
+    connect(m_gameViewer->boardScene(),&BoardScene::humanMoveError,robot,&Robot::onCheckMoveIsError);
+    connect(m_gameViewer->boardScene(),&BoardScene::humanMove,robot,&Robot::onCheckMoveIsOk);
 }
 
 MainWindow::~MainWindow()
@@ -142,19 +156,31 @@ void MainWindow::createToolBars()
 	toolBar->setMovable(false);
 	toolBar->setAllowedAreas(Qt::TopToolBarArea);
 	toolBar->addWidget(m_tabBar);
-	addToolBar(toolBar);
+    addToolBar(toolBar);
 }
 
 void MainWindow::addGame(ChessGame* game)
 {
     m_gameViewer->mvlist->setGame(game);
-if(m_tabBar->count()>1){    // only show 2 tab .
-    closeCurrentGame();
-}
+    if(m_tabBar->count()>1){    // only show 2 tab .
+         closeCurrentGame();
+    }
     TabData tab(game);
 
     connect(game, SIGNAL(finished(ChessGame*)),
             this, SLOT(onGameFinished(ChessGame*)));
+
+    //edit
+    connect(game,&ChessGame::fenChanged,robot,&Robot::setFenOrigin);
+    connect(robot,&Robot::onPieceError,this,&MainWindow::onTest);
+    robot->setFenOrigin(game->board()->fenString());
+    connect(robot,&Robot::onHumanMakeMove,m_gameViewer,&GameViewer::makemove);
+    if(game->player(Chess::Side::White)->isHuman())
+        robot->requestHumanMove();
+    connect(game, SIGNAL(moveMade(Chess::GenericMove, QString, QString)),
+        robot, SLOT(robotMakeMove(Chess::GenericMove)));
+    connect(game,SIGNAL(humanEnabled(bool)),robot,SLOT(humanEnabled(bool)));
+
 
     m_tabs.append(tab);
     m_tabBar->setCurrentIndex(m_tabBar->addTab(genericTitle(tab)));
@@ -307,6 +333,13 @@ void MainWindow::setCurrentGame(const TabData& gameData)
 			clock, SLOT(start(int)));
 		connect(player, SIGNAL(stoppedThinking()),
 			clock, SLOT(stop()));
+        //edit
+
+        if(player->isHuman()){
+            connect(player,&ChessPlayer::startedThinking,this,&MainWindow::onHumanTurn);
+        }else{
+            connect(player,&ChessPlayer::startedThinking,this,&MainWindow::onEngineTurn);
+        }
 	}
 
 	if (m_game->boardShouldBeFlipped())
@@ -403,7 +436,39 @@ void MainWindow::closeTab(int index)
 
 void MainWindow::closeCurrentGame()
 {
-	closeTab(m_tabBar->currentIndex());
+    closeTab(m_tabBar->currentIndex());
+}
+
+void MainWindow::onTest(uint8_t board[])
+{
+    m_gameViewer->boardScene()->setPieceError(board);
+}
+
+void MainWindow::onTest2(uint8_t qFrom,uint8_t qTo,enum Robot::MOVETYPE move_type)
+{
+    qDebug()<<"onTest2:"<<qFrom<<" to "<<qTo<<" type:"<<move_type;
+    int m_file,m_rank;
+    m_file = qFrom%8;
+    m_rank = (63-qFrom)/8;
+    //    GraphicsPiece *piece = pieceAt(m_gameViewer->boardScene()->squarePos(Chess::Square(m_file,m_rank)));
+}
+
+void MainWindow::onTest3()
+{
+    qDebug()<<"onTeast3";
+}
+
+void MainWindow::onHumanTurn(int timeleft)
+{
+    qDebug()<<"onHumanTurn:"<<timeleft;
+    robot->setFenOrigin(m_gameViewer->board()->fenString());
+    robot->requestHumanMove();
+
+}
+
+void MainWindow::onEngineTurn(int timeleft)
+{
+    qDebug()<<"onEngineTurn:"<<timeleft;
 }
 
 void MainWindow::newGame()

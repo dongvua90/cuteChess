@@ -30,7 +30,8 @@ GraphicsPiece::GraphicsPiece(const Chess::Piece& piece,
       m_rect(-squareSize / 2, -squareSize / 2,
           squareSize, squareSize),
 	  m_elementId(elementId),
-	  m_container(nullptr)
+      m_container(nullptr),
+    isError(false)
 {
 	setAcceptedMouseButtons(Qt::LeftButton);
 	setCacheMode(DeviceCoordinateCache);
@@ -94,7 +95,24 @@ QGraphicsItem* GraphicsPiece::container() const
 
 void GraphicsPiece::setContainer(QGraphicsItem* item)
 {
-	m_container = item;
+    m_container = item;
+}
+
+void GraphicsPiece::setPieceError(bool err)
+{
+    if(err){
+        isError = true;
+        setOpacity(0.4f);
+    }
+    else{
+        isError = false;
+        setOpacity(1.0f);
+    }
+}
+
+bool GraphicsPiece::getPieceError()
+{
+    return isError;
 }
 
 void GraphicsPiece::restoreParent()

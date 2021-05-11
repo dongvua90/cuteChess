@@ -21,6 +21,8 @@
 
 #include <QApplication>
 #include <QPointer>
+#include "robot.h"
+#include "threadir.h"
 
 class EngineManager;
 class GameManager;
@@ -39,6 +41,10 @@ class CuteChessApplication : public QApplication
 		static CuteChessApplication* instance();
 		static QString userName();
 
+        Robot *robot;
+        Robot* getIntanceRobot();
+        ThreadIR *mythread;
+        ThreadIR* getIntanceThreadIr();
 	public slots:
 		MainWindow* newGameWindow(ChessGame* game);
 		void newDefaultGame();

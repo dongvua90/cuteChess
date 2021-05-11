@@ -41,6 +41,7 @@ class GraphicsBoard;
 class GraphicsPieceReserve;
 class GraphicsPiece;
 class PieceChooser;
+class CuteChessApplication;
 
 
 /*!
@@ -81,6 +82,7 @@ class BoardScene : public QGraphicsScene
         QPointF m_sourcePos;
         void tryMove(GraphicsPiece* piece, const QPointF& targetPos);
 
+        QPointF squarePos(const Chess::Square& square) const;
 	public slots:
 		/*!
 		 * Clears the scene, creates a new board, and populates
@@ -91,6 +93,7 @@ class BoardScene : public QGraphicsScene
 		 * initialized before calling this function.
 		 */
 		void populate();
+
 		/*! Re-populates the scene according to \a fenString. */
 		void setFenString(const QString& fenString);
 		/*! Makes the move \a move in the scene. */
@@ -107,6 +110,9 @@ class BoardScene : public QGraphicsScene
 		 */
 		void onGameFinished(ChessGame* game, Chess::Result result);
 
+        //edit
+        void setPieceError(uint8_t currentBoard[64]);
+
 	signals:
 		/*!
 		 * This signal is emitted when a human player has made a move.
@@ -116,6 +122,7 @@ class BoardScene : public QGraphicsScene
 		 */
 		void humanMove(const Chess::GenericMove& move,
 			       const Chess::Side& side);
+        void humanMoveError();
 
 	protected:
 		// Inherited from QGraphicsScene
@@ -136,7 +143,7 @@ class BoardScene : public QGraphicsScene
 			Backward
 		};
 
-		QPointF squarePos(const Chess::Square& square) const;
+//		QPointF squarePos(const Chess::Square& square) const;
 		GraphicsPiece* createPiece(const Chess::Piece& piece);
 		QPropertyAnimation* pieceAnimation(GraphicsPiece* piece,
 						   const QPointF& endPoint) const;
@@ -159,6 +166,7 @@ class BoardScene : public QGraphicsScene
 		Chess::GenericMove m_promotionMove;
 		GraphicsPiece* m_highlightPiece;
 		QGraphicsItemGroup* m_moveArrows;
+
 };
 
 #endif // BOARDSCENE_H

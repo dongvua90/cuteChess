@@ -44,6 +44,9 @@ CuteChessApplication::CuteChessApplication(int& argc, char* argv[])
 	  m_initialWindowCreated(false)
 {
 	Mersenne::initialize(QTime(0,0,0).msecsTo(QTime::currentTime()));
+    robot = new Robot();
+    mythread = new ThreadIR();
+    mythread->start(QThread::LowPriority);
 }
 
 CuteChessApplication::~CuteChessApplication()
@@ -59,6 +62,16 @@ CuteChessApplication* CuteChessApplication::instance()
 QString CuteChessApplication::userName()
 {
     return "pika";
+}
+
+Robot* CuteChessApplication::getIntanceRobot()
+{
+    return robot;
+}
+
+ThreadIR *CuteChessApplication::getIntanceThreadIr()
+{
+    return mythread;
 }
 
 GameManager* CuteChessApplication::gameManager()

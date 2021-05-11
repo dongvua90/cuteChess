@@ -130,6 +130,7 @@ void BoardScene::populate()
 	}
 
 	updateMoves();
+
 }
 
 void BoardScene::setFenString(const QString& fenString)
@@ -224,9 +225,6 @@ void BoardScene::flip()
 void BoardScene::mouseMoveEvent(QGraphicsSceneMouseEvent* event)
 {
     GraphicsPiece* piece = pieceAt(event->scenePos());
-    //test
-//    GraphicsPiece* piece = pieceAt(QPoint(119,85));
-//    qDebug()<<"ScenePos:"<<event->scenePos().x()<<"-"<<event->scenePos().y();
     if (piece == m_highlightPiece || m_anim != nullptr || m_chooser != nullptr) // nếu di chuột
 	{
 		QGraphicsScene::mouseMoveEvent(event);
@@ -271,9 +269,8 @@ void BoardScene::mousePressEvent(QGraphicsSceneMouseEvent* event)
 		piece->setPos(m_sourcePos);
 //        Chess::Square spos(m_squares->squareAt(m_sourcePos));
         qDebug()<<"m_sourcePos x:"<<m_sourcePos.x()<<" y:"<<m_sourcePos.y();
-
 		QGraphicsScene::mousePressEvent(event);
-	}
+    }
 	else
 		piece->setFlag(QGraphicsItem::ItemIsMovable, false);
 }
@@ -398,7 +395,48 @@ void BoardScene::onGameFinished(ChessGame* game, Chess::Result result)
 	opAnim->setDuration(2500);
 	group->addAnimation(opAnim);
 
-	group->start(QAbstractAnimation::DeleteWhenStopped);
+    group->start(QAbstractAnimation::DeleteWhenStopped);
+}
+
+void BoardScene::setPieceError(uint8_t currentBoard[])
+{
+    QString fen = m_board->fenString();
+    uint8_t data_fen[65];
+    int num=0;
+    int k=0;
+    while(k<65)
+    {
+        uint8_t piece = fen.at(num).unicode();
+        num++;
+        if((piece > 65 && piece <83)||(piece > 97 && piece<115)) //nếu ký tự là đại diện cac quân cờ
+        {
+            data_fen[k] = piece;
+            k++;
+         }else if(piece >48 && piece < 57) // nếu piece là số từ 1->8
+         {
+             for(int j=0;j<(piece-48);j++)
+             {
+                 data_fen[k] = '_';
+                 k++;
+              }
+         }
+    }
+//    qDebug()<<"data:"<<QString::fromLocal8Bit((char*)data_fen);
+    for(int j=0;j<64;j++){
+        if(data_fen[j] != '_'){  //nếu ô chứa piece
+            int m_file,m_rank;
+            m_file = j%8;
+            m_rank = (63-j)/8;
+            GraphicsPiece *piece = pieceAt(squarePos(Chess::Square(m_file,m_rank)));
+            if(piece==nullptr) return;
+            if(data_fen[j]!= currentBoard[j]) // nếu khác với board sensor
+            {
+                piece->setPieceError(true);
+            }else{
+                piece->setPieceError(false);
+            }
+        }
+    }
 }
 
 QPointF BoardScene::squarePos(const Chess::Square& square) const
@@ -464,9 +502,11 @@ void BoardScene::tryMove(GraphicsPiece* piece, const QPointF& targetPos)
 	// Illegal move
 	if (!m_targets.contains(piece, target))
 	{
-		m_anim = pieceAnimation(piece, m_sourcePos);
-		m_anim->start(QAbstractAnimation::DeleteWhenStopped);
+//		m_anim = pieceAnimation(piece, m_sourcePos);
+//		m_anim->start(QAbstractAnimation::DeleteWhenStopped);
         qDebug()<<"move error:";
+        emit humanMoveError();
+        return;
 	}
 	// Normal move
 	else if (piece->container() == m_squares)

@@ -25,6 +25,10 @@
 #include "menuscreen.h"
 #include "firstscreen.h"
 #include "beginplayfriend.h"
+#include "robot.h"
+#include "threadir.h"
+#include "board/genericmove.h"
+
 
 namespace Chess {
 	class Board;
@@ -49,6 +53,8 @@ class MainWindow : public QMainWindow
 	public:
 		explicit MainWindow(ChessGame* game);
 		virtual ~MainWindow();
+    Robot *robot;
+    Robot* getRobot(); // trả lại đối tượng robot, vì chỉ được phép khởi tạo 1 đối tượng robot
 
 	public slots:
 		void addGame(ChessGame* game);
@@ -58,6 +64,11 @@ class MainWindow : public QMainWindow
 		void closeCurrentGame();
 
 	private slots:
+        void onTest(uint8_t board[]);
+        void onTest2(uint8_t qFrom,uint8_t qTo,enum Robot::MOVETYPE move_type);
+        void onTest3();
+        void onHumanTurn(int timeleft);
+        void onEngineTurn(int timeleft);
 		void newGame();
 		bool save();
         bool saveAs();
@@ -121,6 +132,8 @@ class MainWindow : public QMainWindow
         MenuScreen *menu;
         FirstScreen *fristscreen;
         BeginPlayFriend *beginPlayFriend;
+
+        ThreadIR *threadIr;
 };
 
 #endif // MAINWINDOW_H

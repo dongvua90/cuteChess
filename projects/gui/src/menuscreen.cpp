@@ -1,7 +1,7 @@
 #include "menuscreen.h"
 #include "ui_menu.h"
 
-MenuScreen::MenuScreen():QDialog()
+MenuScreen::MenuScreen(QWidget *parent):QDialog(parent)
   ,ui(new Ui::Menuscreen)
 {
     ui->setupUi(this);

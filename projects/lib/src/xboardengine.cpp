@@ -22,7 +22,7 @@
 #include <QString>
 #include <QStringList>
 #include <QTimer>
-#include <QRandomGenerator>
+//#include <QRandomGenerator>
 #include <QRegularExpression>
 
 #include <climits>
@@ -392,7 +392,7 @@ bool XboardEngine::sendPing()
 
 	// Ping the engine with a random number. The engine should
 	// later send the number back at us.
-	m_lastPing = (QRandomGenerator::global()->generate() % 32) + 1;
+//	m_lastPing = (QRandomGenerator::global()->generate() % 32) + 1;
 	write(QString("ping %1").arg(m_lastPing));
 	return true;
 }

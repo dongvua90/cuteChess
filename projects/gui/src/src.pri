@@ -14,7 +14,9 @@ HEADERS += $$PWD/chessclock.h \
     $$PWD/movetoken.h \
     $$PWD/movecommenttoken.h \
     $$PWD/gametabbar.h \
-    $$PWD/taskinfo.h
+    $$PWD/robot.h \
+    $$PWD/taskinfo.h \
+    $$PWD/threadir.h
 SOURCES += $$PWD/main.cpp \
     $$PWD/beginplayfriend.cpp \
     $$PWD/chessclock.cpp \
@@ -30,4 +32,6 @@ SOURCES += $$PWD/main.cpp \
     $$PWD/movetoken.cpp \
     $$PWD/movecommenttoken.cpp \
     $$PWD/gametabbar.cpp \
-    $$PWD/taskinfo.cpp
+    $$PWD/robot.cpp \
+    $$PWD/taskinfo.cpp \
+    $$PWD/threadir.cpp

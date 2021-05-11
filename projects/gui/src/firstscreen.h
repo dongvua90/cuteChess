@@ -2,6 +2,7 @@
 #define FIRSTSCREEN_H
 #include <QDialog>
 #include "taskinfo.h"
+#include "robot.h"
 
 namespace Ui {
 class Fristscreen;
@@ -18,6 +19,8 @@ signals:
     void onOnlineGame();
 
 private slots:
+    void on_battery_changed(int bat,bool isChanger);
+
     void on_btn_friend_clicked();
 
     void on_btn_computer_clicked();
@@ -27,6 +30,7 @@ private slots:
 private:
     Ui::Fristscreen *ui;
     TaskInfo *info;
+    Robot *robot;
 
 };
 

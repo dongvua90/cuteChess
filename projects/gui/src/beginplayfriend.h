@@ -10,7 +10,7 @@ class BeginPlayFriend : public QDialog
 {
     Q_OBJECT
 public:
-    explicit BeginPlayFriend();
+    explicit BeginPlayFriend(QWidget *parent);
 
 signals:
     void onPlayOnline(int timer,int timeInc,QString variant,bool color,bool billELO,QString nickname);

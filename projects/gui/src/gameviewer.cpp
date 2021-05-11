@@ -47,7 +47,7 @@ GameViewer::GameViewer(Qt::Orientation orientation,
 	  m_moveIndex(0),
       m_humanGame(false)
 {
-    menu = new MenuScreen();
+    menu = new MenuScreen(this);
 	m_boardScene = new BoardScene(this);
 	m_boardView = new BoardView(m_boardScene, this);
 	m_boardView->setEnabled(false);
@@ -77,7 +77,7 @@ GameViewer::GameViewer(Qt::Orientation orientation,
 
 
     //begin add layout main
-    setFixedSize(750,272);
+    setFixedSize(480,272);
 
     QHBoxLayout* layout = new QHBoxLayout();
 	layout->setContentsMargins(0, 0, 0, 0);
@@ -139,21 +139,6 @@ GameViewer::GameViewer(Qt::Orientation orientation,
 
     layout->addLayout(clockLayout);
 	setLayout(layout);
-//debug
-    text_move = new QLineEdit();
-    text_move->setMinimumWidth(100);
-    QPushButton *btn_move = new QPushButton();
-    btn_move->setText("move");
-    QVBoxLayout *layout_debug = new QVBoxLayout();
-    layout_debug->addWidget(text_move);
-    layout_debug->addWidget(btn_move);
-    layout->addLayout(layout_debug);
-    connect(btn_move,SIGNAL(clicked()),this,SLOT(makemove()));
-
-    QPushButton *btn_debug = new QPushButton();
-    btn_debug->setText("debug");
-    connect(btn_debug,SIGNAL(clicked()),this,SLOT(onDebug()));
-    layout_debug->addWidget(btn_debug);
 }
 
 ChessClock* GameViewer::chessClock(Chess::Side side)
@@ -176,7 +161,7 @@ void GameViewer::setGame(ChessGame* game)
 {
 	Q_ASSERT(game != nullptr);
     //test
-    mygame = game;
+//    mygame = game;
 	setGame(game->pgn());
 	m_game = game;
 
@@ -384,6 +369,8 @@ void GameViewer::onFenChanged(const QString& fen)
 
 void GameViewer::onMoveMade(const Chess::GenericMove& move)
 {
+//    qDebug()<<"onMoveMake:"<<move.sourceSquare().file()<<move.sourceSquare().rank()
+//           <<" to "<<move.targetSquare().file()<<move.targetSquare().rank();
 	m_moves.append(move);
 
 	if (m_moveIndex == m_moves.count() - 1)
@@ -409,29 +396,50 @@ void GameViewer::onMenuClicked()
     menu->show();
 }
 
-void GameViewer::makemove()
+void GameViewer::makemove(uint8_t qFrom,uint8_t qTo,enum Robot::MOVETYPE move_type)
 {
-    QString move = text_move->text();
-    QPoint from,to;
-    from.setX(move.mid(0,1).toInt()*34 -119);
-    from.setY(119 - move.mid(1,1).toInt()*34);
-    to.setX(move.mid(2,1).toInt()*34 -119);
-    to.setY(119 - move.mid(3,1).toInt()*34);
-    qDebug()<<"point:from:"<<from.x()<<"-"<<from.y()<<" to "<<to.x()<<"-"<<to.y();
-
-
     m_boardScene->stopAnimation();
-    GraphicsPiece* piece = m_boardScene->pieceAt(from);
+    int m_file,m_rank;
+    m_file = qFrom%8;
+    m_rank = (63-qFrom)/8;
+    GraphicsPiece* piece = m_boardScene->pieceAt(boardScene()->squarePos(Chess::Square(m_file,m_rank)));
     if (piece == nullptr) // nếu vị trí move_from ko phải là quân cờ thì di chuyển lỗi
+    {
+        emit boardScene()->humanMoveError();
         return;
-
+    }
     if (m_boardScene->m_targets.contains(piece))
     {
         m_boardScene->m_sourcePos = piece->scenePos();
         piece->setParentItem(nullptr);
         piece->setPos(m_boardScene->m_sourcePos);
     }
-    m_boardScene->tryMove(piece, to);
+    m_boardScene->tryMove(piece, boardScene()->squarePos(Chess::Square(qTo%8,(63-qTo)/8)));
+
+
+
+
+//    QString move = text_move->text();
+//    QPoint from,to;
+//    from.setX(move.mid(0,1).toInt()*34 -119);
+//    from.setY(119 - move.mid(1,1).toInt()*34);
+//    to.setX(move.mid(2,1).toInt()*34 -119);
+//    to.setY(119 - move.mid(3,1).toInt()*34);
+//    qDebug()<<"point:from:"<<from.x()<<"-"<<from.y()<<" to "<<to.x()<<"-"<<to.y();
+
+
+//    m_boardScene->stopAnimation();
+//    GraphicsPiece* piece = m_boardScene->pieceAt(from);
+//    if (piece == nullptr) // nếu vị trí move_from ko phải là quân cờ thì di chuyển lỗi
+//        return;
+
+//    if (m_boardScene->m_targets.contains(piece))
+//    {
+//        m_boardScene->m_sourcePos = piece->scenePos();
+//        piece->setParentItem(nullptr);
+//        piece->setPos(m_boardScene->m_sourcePos);
+//    }
+//    m_boardScene->tryMove(piece, to);
 
 }
 
