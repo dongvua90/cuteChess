@@ -1,8 +1,11 @@
 include(boardview/boardview.pri)
 DEPENDPATH += $$PWD
 HEADERS += $$PWD/chessclock.h \
+    $$PWD/beginplaycomputer.h \
     $$PWD/beginplayfriend.h \
     $$PWD/firstscreen.h \
+    $$PWD/lichess.h \
+    $$PWD/lichessdata.h \
     $$PWD/mainwindow.h \
     $$PWD/menuscreen.h \
     $$PWD/newgamedlg.h \
@@ -16,11 +19,15 @@ HEADERS += $$PWD/chessclock.h \
     $$PWD/gametabbar.h \
     $$PWD/robot.h \
     $$PWD/taskinfo.h \
-    $$PWD/threadir.h
+    $$PWD/threadir.h \
+    $$PWD/virtualkeyboard.h
 SOURCES += $$PWD/main.cpp \
+    $$PWD/beginplaycomputer.cpp \
     $$PWD/beginplayfriend.cpp \
     $$PWD/chessclock.cpp \
     $$PWD/firstscreen.cpp \
+    $$PWD/lichess.cpp \
+    $$PWD/lichessdata.cpp \
     $$PWD/mainwindow.cpp \
     $$PWD/menuscreen.cpp \
     $$PWD/newgamedlg.cpp \
@@ -34,4 +41,5 @@ SOURCES += $$PWD/main.cpp \
     $$PWD/gametabbar.cpp \
     $$PWD/robot.cpp \
     $$PWD/taskinfo.cpp \
-    $$PWD/threadir.cpp
+    $$PWD/threadir.cpp \
+    $$PWD/virtualkeyboard.cpp

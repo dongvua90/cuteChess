@@ -281,7 +281,22 @@ void BoardScene::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
     if (piece != nullptr && event->button() == Qt::LeftButton)
     {
         QPointF targetPos(m_squares->mapFromScene(event->scenePos()));
-        tryMove(piece, targetPos);
+//        tryMove(piece, targetPos);
+        Chess::Square spos(m_squares->squareAt(m_sourcePos));
+        QChar from_file,from_rank,to_file,to_rank;
+        from_file = spos.file()+97;
+        from_rank = spos.rank()+49;
+        Chess::Square tpos(m_squares->squareAt(targetPos));
+        to_file =   tpos.file()+97;
+        to_rank =   tpos.rank()+49;
+        QString move;
+        move.append(from_file);
+        move.append(from_rank);
+        move.append(to_file);
+        move.append(to_rank);
+        qDebug()<<"boardscene MoveMake:"<<move;
+        emit humanMakeMove(move);
+//        tryMove(piece, targetPos);
     }
     QGraphicsScene::mouseReleaseEvent(event);
 }

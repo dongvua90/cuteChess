@@ -1,6 +1,7 @@
 #ifndef BEGINPLAYFRIEND_H
 #define BEGINPLAYFRIEND_H
 #include <QDialog>
+#include "virtualkeyboard.h"
 
 namespace Ui {
 class BeginGameonline;
@@ -15,7 +16,8 @@ public:
 signals:
     void onPlayOnline(int timer,int timeInc,QString variant,bool color,bool billELO,QString nickname);
 private slots:
-
+    void onKeyboardEnter(QString data);
+    void onKeyboardCancel();
     void on_slider_timer_valueChanged(int value);
 
     void on_slider_timeInc_valueChanged(int value);
@@ -28,7 +30,7 @@ private slots:
 
     void on_btn_billElo_toggled(bool checked);
 
-    void on_lineEdit_lichessUser_editingFinished();
+    void on_btn_inputuser_clicked();
 
 private:
     Ui::BeginGameonline *ui;
@@ -44,6 +46,7 @@ private:
     void setTimeInc(int time);
     void readSetting();
     void writeSetting();
+    VirtualKeyboard *vtKeyboard;
 
 };
 

@@ -64,9 +64,12 @@ class GameViewer : public QWidget
 		void viewMove(int index, bool keyLeft = false);
 
          void makemove(uint8_t qFrom,uint8_t qTo,enum Robot::MOVETYPE move_type);
+         void makemove2(QString move,Chess::Side side);
 
 	signals:
 		void moveSelected(int moveNumber);
+        void boardMakeMove(QString move);
+        void debugMakeMove(QString move);
 
 	private slots:
 		void viewFirstMoveClicked();
@@ -83,6 +86,7 @@ class GameViewer : public QWidget
 
 
         void onDebug();
+        void onMakemove();
 
 	private:
 
@@ -115,6 +119,10 @@ class GameViewer : public QWidget
         QLineEdit *text_move;
 
         ChessGame *mygame;
+
+        //debug
+        QPushButton *btn_move;
+        QLineEdit *le_move;
 
 };
 

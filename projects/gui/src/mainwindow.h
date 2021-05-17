@@ -28,7 +28,8 @@
 #include "robot.h"
 #include "threadir.h"
 #include "board/genericmove.h"
-
+#include "beginplaycomputer.h"
+#include "lichessdata.h"
 
 namespace Chess {
 	class Board;
@@ -58,82 +59,44 @@ class MainWindow : public QMainWindow
 
 	public slots:
 		void addGame(ChessGame* game);
-
-	protected:
-		virtual void closeEvent(QCloseEvent* event);
-		void closeCurrentGame();
-
+        void newLichessGameComputer(LichessData dat);
 	private slots:
-        void onTest(uint8_t board[]);
         void onTest2(uint8_t qFrom,uint8_t qTo,enum Robot::MOVETYPE move_type);
-        void onTest3();
+        void onTest3(QString move);
+        void onChallengeAi();
+        void onPieceError(uint8_t board[]);
         void onHumanTurn(int timeleft);
         void onEngineTurn(int timeleft);
 		void newGame();
-		bool save();
-        bool saveAs();
-		void onTabChanged(int index);
-		void onTabCloseRequested(int index);
-		void closeTab(int index);
-		void destroyGame(ChessGame* game);
 		void onGameManagerFinished();
 		void onGameStartFailed(ChessGame* game);
-		void onGameFinished(ChessGame* game);
-		void closeAllGames();
 		void resignGame();
-        void myClose();
+        void drawGame();
         void onMenuNewgame();
         void onMenuNewgameOnline();
+        void onMenuNewgameComputer();
         void newGameOnline(int timer,int timeInc,QString variant,bool color,bool billELO,QString nickname);
 
 	private:
-		struct TabData
-		{
-            explicit TabData(ChessGame* m_game,
-                     Tournament* m_tournament = nullptr);
-
-			ChessGame* m_id;
-			QPointer<ChessGame> m_game;
-			PgnGame* m_pgn;
-            Tournament* m_tournament;
-			bool m_finished;
-		};
-		void createToolBars();
-		QString genericTitle(const TabData& gameData) const;
-		QString nameOnClock(const QString& name, Chess::Side side) const;
-		void lockCurrentGame();
-		void unlockCurrentGame();
-		bool saveGame(const QString& fileName);
-		void setCurrentGame(const TabData& gameData);
-		void removeGame(int index);
-		int tabIndex(ChessGame* game) const;
-        int tabIndex(Tournament* tournament, bool freeTab = false) const;
-
-		QMenu* m_gameMenu;
-		QMenu* m_windowMenu;
-
-		GameTabBar* m_tabBar;
-
+        void setCurrentGame();
+        QString nameOnClock(const QString& name, Chess::Side side);
 		GameViewer* m_gameViewer;
 		MoveList* m_moveList;
-
-		QPointer<ChessGame> m_game;
 		QPointer<ChessPlayer> m_players[2];
-		QList<TabData> m_tabs;
 
 		QString m_currentFile;
-		bool m_closing;
-		bool m_readyToClose;
-
-		bool m_firstTabAutoCloseEnabled;
 
         bool isNewGame=false;
 
         MenuScreen *menu;
         FirstScreen *fristscreen;
         BeginPlayFriend *beginPlayFriend;
+        BeginPlayComputer *beginPlayComputer;
 
         ThreadIR *threadIr;
+        ChessGame *main_game;
+
+        QString lichessId;
 };
 
 #endif // MAINWINDOW_H

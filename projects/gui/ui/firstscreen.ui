@@ -225,10 +225,10 @@ background-repeat: none;
   <widget class="Line" name="line">
    <property name="geometry">
     <rect>
-     <x>66</x>
+     <x>129</x>
      <y>150</y>
-     <width>334</width>
-     <height>16</height>
+     <width>271</width>
+     <height>20</height>
     </rect>
    </property>
    <property name="lineWidth">
@@ -359,6 +359,89 @@ background-repeat: none;
    </property>
    <property name="text">
     <string>Computer</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="btn_playOffline">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>134</y>
+     <width>120</width>
+     <height>50</height>
+    </rect>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>120</width>
+     <height>50</height>
+    </size>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>120</width>
+     <height>50</height>
+    </size>
+   </property>
+   <property name="palette">
+    <palette>
+     <active>
+      <colorrole role="ButtonText">
+       <brush brushstyle="SolidPattern">
+        <color alpha="255">
+         <red>238</red>
+         <green>238</green>
+         <blue>236</blue>
+        </color>
+       </brush>
+      </colorrole>
+     </active>
+     <inactive>
+      <colorrole role="ButtonText">
+       <brush brushstyle="SolidPattern">
+        <color alpha="255">
+         <red>238</red>
+         <green>238</green>
+         <blue>236</blue>
+        </color>
+       </brush>
+      </colorrole>
+     </inactive>
+     <disabled>
+      <colorrole role="ButtonText">
+       <brush brushstyle="SolidPattern">
+        <color alpha="255">
+         <red>190</red>
+         <green>190</green>
+         <blue>190</blue>
+        </color>
+       </brush>
+      </colorrole>
+     </disabled>
+    </palette>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>16</pointsize>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">#btn_playOffline{
+background-color: transparent;
+background: none;
+border-style: outset;
+border-width: 2px;
+border-color: beige;
+border-radius: 25px;
+background-repeat: none;
+}
+#btn_playOffline:pressed
+{
+	background-color: rgb(239, 41, 41);
+	border-color: rgb(186, 189, 182);
+}</string>
+   </property>
+   <property name="text">
+    <string>Play Offline</string>
    </property>
   </widget>
  </widget>

@@ -20,7 +20,7 @@ macx-xcode {
     DEFINES += CUTECHESS_VERSION=\\\"$$CUTECHESS_VERSION\\\"
 }
 
-QT += svg widgets concurrent printsupport
+QT += svg widgets concurrent printsupport network
 greaterThan(QT_MAJOR_VERSION, 5) {
     QT += core5compat
 }

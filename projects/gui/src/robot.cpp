@@ -36,7 +36,7 @@ void Robot::setFenOrigin(QString fen)
 
 void Robot::requestHumanMove()
 {
-    timeCheckError->start(2000); // kiểm tra vị trí piece trên bàn cờ.
+    timeCheckError->start(200); // kiểm tra vị trí piece trên bàn cờ.
                                     // chỉ chuyển sang bước HumanMakeMove khi không còn lỗi.
 }
 
@@ -240,7 +240,7 @@ void Robot::checkErrorBoard()
     {
         for(int i=0;i<len_error;i++)
         {
-            qDebug()<<"SquaErr:"<<i<<"-"<<squareErr[i];
+//            qDebug()<<"SquaErr:"<<i<<"-"<<squareErr[i];
         }
     }else{
         timeCheckError->stop();
@@ -281,12 +281,29 @@ void Robot::humanEnabled(bool isHuman)
 void Robot::robotMakeMove(const Chess::GenericMove& move)
 {
     if(isHumanTurn == true) return;
-    enum MOVETYPE movetype;
+        enum MOVETYPE movetype;
         qDebug()<<"onMoveMake:"<<move.sourceSquare().file()<<move.sourceSquare().rank()
                <<" to "<<move.targetSquare().file()<<move.targetSquare().rank();
         uint8_t qfrom,qto;
         qfrom = (7 - move.sourceSquare().rank())*8 + move.sourceSquare().file();
         qto   = (7 - move.targetSquare().rank())*8 + move.targetSquare().file();
+        // nhập thành (hiện chỉ hỗ trợ bên đen)
+        if((data_board[qfrom]=='k' && data_board[qto]=='r'))
+        {
+            if(qto==63){    //nhập thành cánh vua
+                makeMove(qfrom,qto,MOVE_CASLLING_KING);
+            }else if(qto == 55){    //nhập thành cánh hậu
+                makeMove(qfrom,qto,MOVE_CASLLINGG_QUEEN);
+            }
+            return;
+        }
+        //ăn tốt qua đường
+        if(data_board[qfrom]=='p' && data_board[qto]!='_')
+        {
+            makeMove(qfrom,qto,MOVE_PASSANT);
+            return;
+        }
+
         if(data_board[qto] != '_')
         {
             movetype = MOVE_KILL;

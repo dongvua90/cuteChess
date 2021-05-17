@@ -123,6 +123,7 @@ class BoardScene : public QGraphicsScene
 		void humanMove(const Chess::GenericMove& move,
 			       const Chess::Side& side);
         void humanMoveError();
+        void humanMakeMove(QString move);
 
 	protected:
 		// Inherited from QGraphicsScene

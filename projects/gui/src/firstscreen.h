@@ -17,6 +17,7 @@ public:
 signals:
     void onCpuGame();
     void onOnlineGame();
+    void onGameonlineComputer();
 
 private slots:
     void on_battery_changed(int bat,bool isChanger);
@@ -26,6 +27,8 @@ private slots:
     void on_btn_computer_clicked();
 
     void on_setting_clicked();
+
+    void on_btn_playOffline_clicked();
 
 private:
     Ui::Fristscreen *ui;

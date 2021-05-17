@@ -41,7 +41,7 @@ NewGameDialog::NewGameDialog(QWidget* parent)
       ui(new Ui::NewGameDialog)
 {
 	ui->setupUi(this);
-
+    setFixedSize(480,272);
     move(0,0);
     ui->comboBox_variant->addItem("standard");
     ui->comboBox_variant->addItem("atomic");

@@ -2,16 +2,22 @@
 #include "ui_beginGameOnine.h"
 #include <QSettings>
 #include <QDebug>
+#include "cutechessapp.h"
 
 BeginPlayFriend::BeginPlayFriend(QWidget *parent) : QDialog(parent)
   ,ui(new Ui::BeginGameonline)
 {
     ui->setupUi(this);
-
-    ui->comboBox_variant->addItem("standard");
-    ui->comboBox_variant->addItem("atomic");
-    ui->comboBox_variant->addItem("kingofthehill");
-    ui->comboBox_variant->addItem("crazyhouse");
+    ui->comboBox_variant->addItem("Standard");
+    ui->comboBox_variant->addItem("CrazyHouse");
+    ui->comboBox_variant->addItem("Chess960");
+    ui->comboBox_variant->addItem("King of the Hill");
+    ui->comboBox_variant->addItem("Three-Check");
+    ui->comboBox_variant->addItem("AntiChess");
+    ui->comboBox_variant->addItem("Atomic");
+    ui->comboBox_variant->addItem("Horde");
+    ui->comboBox_variant->addItem("RacingKings");
+    ui->comboBox_variant->addItem("FromPosition");
 
     readSetting();
     ui->comboBox_variant->setCurrentIndex(m_variant);
@@ -22,7 +28,22 @@ BeginPlayFriend::BeginPlayFriend(QWidget *parent) : QDialog(parent)
     ui->btn_playerColor->setChecked(m_color);
     on_btn_playerColor_toggled(m_color);
     on_btn_billElo_toggled(m_billElo);
-    ui->lineEdit_lichessUser->setText(m_nickname);
+    ui->btn_inputuser->setText(m_nickname);
+    vtKeyboard = CuteChessApplication::instance()->vtKeyboard;
+    connect(vtKeyboard,&VirtualKeyboard::keyboarEnter,this,&BeginPlayFriend::onKeyboardEnter);
+    connect(vtKeyboard,&VirtualKeyboard::keyboardCancel,this,&BeginPlayFriend::onKeyboardCancel);
+}
+
+void BeginPlayFriend::onKeyboardEnter(QString data)
+{
+    m_nickname = data;
+    ui->btn_inputuser->setText(m_nickname);
+    vtKeyboard->hide();
+}
+
+void BeginPlayFriend::onKeyboardCancel()
+{
+    vtKeyboard->hide();
 }
 
 
@@ -158,8 +179,8 @@ void BeginPlayFriend::on_btn_billElo_toggled(bool checked)
     }
 }
 
-void BeginPlayFriend::on_lineEdit_lichessUser_editingFinished()
+void BeginPlayFriend::on_btn_inputuser_clicked()
 {
-    m_nickname = ui->lineEdit_lichessUser->text();
-//    qDebug()<<"FINISEDIT:"<<ui->lineEdit_lichessUser->text();
+    vtKeyboard->setData(m_nickname);
+    vtKeyboard->exec();
 }

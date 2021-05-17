@@ -10,6 +10,24 @@
     <height>272</height>
    </rect>
   </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>480</width>
+    <height>272</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>480</width>
+    <height>272</height>
+   </size>
+  </property>
   <property name="palette">
    <palette>
     <active>
@@ -428,11 +446,33 @@
        </item>
        <item>
         <widget class="QSlider" name="slider_timer">
-         <property name="maximumSize">
+         <property name="minimumSize">
           <size>
            <width>240</width>
-           <height>480</height>
+           <height>40</height>
           </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>380</width>
+           <height>40</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QSlider::groove:horizontal {
+    border: 1px solid #999999;
+    height: 20px; 
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #B1B1B1, stop:1 #c4c4c4);
+    margin: 2px 0;
+}
+
+QSlider::handle:horizontal {
+	background-color: rgb(238, 238, 236);
+    border: 1px solid #5c5c5c;
+    width: 30px;
+    margin: -2px 0; /* handle is placed by default on the contents rect of the groove. Expand outside the groove */
+    border-radius: 3px;
+}</string>
          </property>
          <property name="minimum">
           <number>0</number>
@@ -449,7 +489,7 @@
         <widget class="QLabel" name="lb_timer">
          <property name="minimumSize">
           <size>
-           <width>100</width>
+           <width>150</width>
            <height>0</height>
           </size>
          </property>
@@ -575,11 +615,33 @@
      </item>
      <item>
       <widget class="QSlider" name="slider_timeInc">
+       <property name="minimumSize">
+        <size>
+         <width>240</width>
+         <height>40</height>
+        </size>
+       </property>
        <property name="maximumSize">
         <size>
          <width>240</width>
-         <height>16777215</height>
+         <height>40</height>
         </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QSlider::groove:horizontal {
+    border: 1px solid #999999;
+    height: 20px; 
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #B1B1B1, stop:1 #c4c4c4);
+    margin: 2px 0;
+}
+
+QSlider::handle:horizontal {
+	background-color: rgb(238, 238, 236);
+    border: 1px solid #5c5c5c;
+    width: 30px;
+    margin: -2px 0; /* handle is placed by default on the contents rect of the groove. Expand outside the groove */
+    border-radius: 3px;
+}</string>
        </property>
        <property name="maximum">
         <number>8</number>
@@ -720,14 +782,30 @@
        <property name="minimumSize">
         <size>
          <width>240</width>
-         <height>0</height>
+         <height>40</height>
         </size>
        </property>
        <property name="maximumSize">
         <size>
          <width>240</width>
-         <height>16777215</height>
+         <height>40</height>
         </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QSlider::groove:horizontal {
+    border: 1px solid #999999;
+    height: 20px; 
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #B1B1B1, stop:1 #c4c4c4);
+    margin: 2px 0;
+}
+
+QSlider::handle:horizontal {
+	background-color: rgb(238, 238, 236);
+    border: 1px solid #5c5c5c;
+    width: 30px;
+    margin: -2px 0; /* handle is placed by default on the contents rect of the groove. Expand outside the groove */
+    border-radius: 3px;
+}</string>
        </property>
        <property name="maximum">
         <number>20</number>

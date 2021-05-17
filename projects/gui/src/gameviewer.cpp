@@ -77,7 +77,7 @@ GameViewer::GameViewer(Qt::Orientation orientation,
 
 
     //begin add layout main
-    setFixedSize(480,272);
+    setFixedSize(580,272);
 
     QHBoxLayout* layout = new QHBoxLayout();
 	layout->setContentsMargins(0, 0, 0, 0);
@@ -138,6 +138,16 @@ GameViewer::GameViewer(Qt::Orientation orientation,
     clockLayout->setMargin(0);
 
     layout->addLayout(clockLayout);
+    //debug
+    QVBoxLayout *layout_debug = new QVBoxLayout();
+    btn_move=new QPushButton();
+    btn_move->setText("move");
+    le_move = new QLineEdit();
+    layout_debug->addWidget(le_move);
+    layout_debug->addWidget(btn_move);
+    layout->addLayout(layout_debug);
+    connect(btn_move,SIGNAL(clicked()),this,SLOT(onMakemove()));
+    //end debug
 	setLayout(layout);
 }
 
@@ -416,31 +426,29 @@ void GameViewer::makemove(uint8_t qFrom,uint8_t qTo,enum Robot::MOVETYPE move_ty
     }
     m_boardScene->tryMove(piece, boardScene()->squarePos(Chess::Square(qTo%8,(63-qTo)/8)));
 
+}
 
-
-
-//    QString move = text_move->text();
-//    QPoint from,to;
-//    from.setX(move.mid(0,1).toInt()*34 -119);
-//    from.setY(119 - move.mid(1,1).toInt()*34);
-//    to.setX(move.mid(2,1).toInt()*34 -119);
-//    to.setY(119 - move.mid(3,1).toInt()*34);
-//    qDebug()<<"point:from:"<<from.x()<<"-"<<from.y()<<" to "<<to.x()<<"-"<<to.y();
-
-
-//    m_boardScene->stopAnimation();
-//    GraphicsPiece* piece = m_boardScene->pieceAt(from);
-//    if (piece == nullptr) // nếu vị trí move_from ko phải là quân cờ thì di chuyển lỗi
-//        return;
-
-//    if (m_boardScene->m_targets.contains(piece))
-//    {
-//        m_boardScene->m_sourcePos = piece->scenePos();
-//        piece->setParentItem(nullptr);
-//        piece->setPos(m_boardScene->m_sourcePos);
-//    }
-//    m_boardScene->tryMove(piece, to);
-
+void GameViewer::makemove2(QString move, Chess::Side side)
+{
+    m_boardScene->stopAnimation();
+    int m_file,m_rank,t_file,t_rank;
+    m_file = move.at(0).toLatin1()-97;
+    m_rank = move.at(1).toLatin1()-49;
+    t_file = move.at(2).toLatin1()-97;
+    t_rank = move.at(3).toLatin1()-49;
+    GraphicsPiece* piece = m_boardScene->pieceAt(boardScene()->squarePos(Chess::Square(m_file,m_rank)));
+    if (piece == nullptr) // nếu vị trí move_from ko phải là quân cờ thì di chuyển lỗi
+    {
+        emit boardScene()->humanMoveError();
+        return;
+    }
+    if (m_boardScene->m_targets.contains(piece))
+    {
+        m_boardScene->m_sourcePos = piece->scenePos();
+        piece->setParentItem(nullptr);
+        piece->setPos(m_boardScene->m_sourcePos);
+    }
+    m_boardScene->tryMove(piece, boardScene()->squarePos(Chess::Square(t_file,t_rank)));
 }
 
 void GameViewer::onDebug()
@@ -450,5 +458,11 @@ void GameViewer::onDebug()
     m_boardScene->populate();
     GraphicsPiece *mpiece = m_boardScene->pieceAt(QPoint(85,85));
     mpiece->setOpacity(0.3f);
+}
+
+void GameViewer::onMakemove()
+{
+    qDebug()<<"gameview_makemove";
+    emit debugMakeMove(le_move->text());
 }
 

@@ -47,6 +47,9 @@ CuteChessApplication::CuteChessApplication(int& argc, char* argv[])
     robot = new Robot();
     mythread = new ThreadIR();
     mythread->start(QThread::LowPriority);
+    vtKeyboard = new VirtualKeyboard();
+    lichess = new Lichess();
+
 }
 
 CuteChessApplication::~CuteChessApplication()
@@ -89,7 +92,6 @@ GameManager* CuteChessApplication::gameManager()
 
 MainWindow* CuteChessApplication::newGameWindow(ChessGame* game)
 {
-    qDebug()<<"newGameWindown";
 	MainWindow* mainWindow = new MainWindow(game);
 	mainWindow->show();
     return mainWindow;

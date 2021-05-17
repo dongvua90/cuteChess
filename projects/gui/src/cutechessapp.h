@@ -23,6 +23,8 @@
 #include <QPointer>
 #include "robot.h"
 #include "threadir.h"
+#include "virtualkeyboard.h"
+#include "lichess.h"
 
 class EngineManager;
 class GameManager;
@@ -45,6 +47,8 @@ class CuteChessApplication : public QApplication
         Robot* getIntanceRobot();
         ThreadIR *mythread;
         ThreadIR* getIntanceThreadIr();
+        VirtualKeyboard *vtKeyboard;
+        Lichess *lichess;
 	public slots:
 		MainWindow* newGameWindow(ChessGame* game);
 		void newDefaultGame();
@@ -53,6 +57,7 @@ class CuteChessApplication : public QApplication
 	private:
 		GameManager* m_gameManager;
 		bool m_initialWindowCreated;
+
 
 	private slots:
 		void onLastWindowClosed();

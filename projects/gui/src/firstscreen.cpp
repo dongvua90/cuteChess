@@ -45,13 +45,17 @@ void FirstScreen::on_btn_friend_clicked()
 
 void FirstScreen::on_btn_computer_clicked()
 {
-
-//    close();
     setVisible(false);
-    emit onCpuGame();
+    emit onGameonlineComputer();
 }
 
 void FirstScreen::on_setting_clicked()
 {
 
+}
+
+void FirstScreen::on_btn_playOffline_clicked()
+{
+    setVisible(false);
+    emit onCpuGame();
 }
