@@ -244,7 +244,7 @@ void ChessGame::emitLastMove()
 	}
 
 	const auto& md = m_pgn->moves().last();
-	emit moveMade(md.move, md.moveString, md.comment);
+    emit moveMade(md.move, md.moveString, md.comment);
 }
 
 void ChessGame::onMoveMade(const Chess::Move& move)

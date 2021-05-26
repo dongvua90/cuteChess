@@ -1,15 +1,17 @@
 #include "virtualkeyboard.h"
 #include "ui_virtualkeyboard.h"
 
-VirtualKeyboard::VirtualKeyboard() :QDialog()
+VirtualKeyboard::VirtualKeyboard(QWidget *parent) :QDialog(parent)
   ,ui(new Ui::keyboard)
 {
     ui->setupUi(this);
+    move(0,0);
 }
 
 void VirtualKeyboard::setData(QString dat)
 {
     data = dat;
+    ui->inputText->setText(data);
 }
 
 void VirtualKeyboard::on_key_changeStyle_clicked()

@@ -16,7 +16,7 @@
     along with Cute Chess.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "newgamedlg.h"
+#include "newgameofflinedlg.h"
 #include "ui_newgamedlg.h"
 
 #include <QAbstractItemView>
@@ -29,14 +29,14 @@
 #include <enginemanager.h>
 #include <openingsuite.h>
 
-#include "cutechessapp.h"
+#include "robochessapp.h"
 #include "timecontroldlg.h"
 #include "stringvalidator.h"
 #include <timecontrol.h>
 #include <QSettings>
 
 
-NewGameDialog::NewGameDialog(QWidget* parent)
+NewGameOfflineDialog::NewGameOfflineDialog(QWidget* parent)
 	: QDialog(parent),
       ui(new Ui::NewGameDialog)
 {
@@ -44,9 +44,9 @@ NewGameDialog::NewGameDialog(QWidget* parent)
     setFixedSize(480,272);
     move(0,0);
     ui->comboBox_variant->addItem("standard");
-    ui->comboBox_variant->addItem("atomic");
-    ui->comboBox_variant->addItem("kingofthehill");
-    ui->comboBox_variant->addItem("crazyhouse");
+//    ui->comboBox_variant->addItem("atomic");
+//    ui->comboBox_variant->addItem("kingofthehill");
+//    ui->comboBox_variant->addItem("crazyhouse");
 
     readSetting();
     ui->comboBox_variant->setCurrentIndex(m_variant);
@@ -74,19 +74,19 @@ NewGameDialog::NewGameDialog(QWidget* parent)
     on_btn_playerColor_toggled(m_color);
 }
 
-NewGameDialog::~NewGameDialog()
+NewGameOfflineDialog::~NewGameOfflineDialog()
 {
 	delete ui;
 }
 
-ChessGame* NewGameDialog::createGame() const
+ChessGame* NewGameOfflineDialog::createGame() const
 {
     auto board = Chess::BoardFactory::create(ui->comboBox_variant->currentText());
 	auto pgn = new PgnGame();
 	pgn->setSite(QSettings().value("pgn/site").toString());
 	auto game = new ChessGame(board, pgn);
 
-    int timsum,engine_timeMin=0,engine_timeSec=0;
+    int timsum=0,engine_timeMin=0,engine_timeSec=0;
     switch (m_timer) {
         case 0: timsum=5;engine_timeMin=0;engine_timeSec=15; break;
         case 1: timsum=10;engine_timeMin=0;engine_timeSec=30; break;
@@ -96,7 +96,7 @@ ChessGame* NewGameDialog::createGame() const
         case 5: timsum=60;engine_timeMin=2;engine_timeSec=0; break;
         case 6: timsum=120;engine_timeMin=3;engine_timeSec=0; break;
         case 7: timsum=180;engine_timeMin=5;engine_timeSec=0; break;
-        case 8: timsum=1000;engine_timeMin=10;engine_timeSec=0; break;
+        case 8: timsum=240;engine_timeMin=10;engine_timeSec=0; break;
     }
 
     int tim;
@@ -111,8 +111,8 @@ ChessGame* NewGameDialog::createGame() const
         case 7: tim=45; break;
         case 8: tim=60; break;
     }
-    QString human_tim=QString::number(timsum)+":00+"+QString::number(tim);
 
+    QString human_tim=QString::number(timsum)+":00+"+QString::number(tim);
     QString engine_tim=QString::number(engine_timeMin)+":"+QString::number(engine_timeSec);
     Chess::Side human_side,engine_side;
     if(m_color){
@@ -122,15 +122,14 @@ ChessGame* NewGameDialog::createGame() const
        human_side = Chess::Side::White;
        engine_side=Chess::Side::Black;
     }
-        game->setTimeControl(TimeControl(human_tim),human_side);
-        game->setTimeControl(TimeControl("1:00"),engine_side);
 
-
+    game->setTimeControl(TimeControl(human_tim),human_side);
+    game->setTimeControl(TimeControl(engine_tim),engine_side);
 
 	return game;
 }
 
-PlayerBuilder* NewGameDialog::createPlayerBuilder(Chess::Side side) const
+PlayerBuilder* NewGameOfflineDialog::createPlayerBuilder(Chess::Side side) const
 {
 	if (playerType(side) == CPU)
 	{
@@ -141,22 +140,26 @@ PlayerBuilder* NewGameDialog::createPlayerBuilder(Chess::Side side) const
         config.setOption("Move Overhead [ms]","50");
         config.setOption("Hash","1");
         config.setOption("CPU Speed [%]","1");
-//        if(m_limitStrenger){
-//            config.setOption("UCI_LimitStrength","true");
-//            config.setOption("UCI_Elo",QString::number(m_elo));
-//        }else{
-//            config.setOption("UCI_LimitStrength","false");
-//        }
-
 		return new EngineBuilder(config);
 	}
 	bool ignoreFlag = QSettings().value("games/human_can_play_after_timeout",
 					   true).toBool();
-	return new HumanBuilder(CuteChessApplication::userName(), ignoreFlag);
+    QString name = RobochessApplication::instance()->lichess->m_user_name;
+    if(name.length()>0)
+        return new HumanBuilder(name, ignoreFlag);
+    else
+        return new HumanBuilder("Player",ignoreFlag);
+}
+
+bool NewGameOfflineDialog::humanIsWhite()
+{
+    if(m_color)
+        return false;
+    return true;
 }
 
 
-NewGameDialog::PlayerType NewGameDialog::playerType(Chess::Side side) const
+NewGameOfflineDialog::PlayerType NewGameOfflineDialog::playerType(Chess::Side side) const
 {
 	Q_ASSERT(!side.isNull());
 
@@ -175,7 +178,7 @@ NewGameDialog::PlayerType NewGameDialog::playerType(Chess::Side side) const
     }
 }
 
-void NewGameDialog::setTimer(int timer)
+void NewGameOfflineDialog::setTimer(int timer)
 {
     switch (timer) {
         case 0: ui->lb_timer->setText("5 min"); break;
@@ -183,14 +186,14 @@ void NewGameDialog::setTimer(int timer)
         case 2: ui->lb_timer->setText("20 min"); break;
         case 3: ui->lb_timer->setText("30 min"); break;
         case 4: ui->lb_timer->setText("45 min"); break;
-        case 5: ui->lb_timer->setText("60 min"); break;
-        case 6: ui->lb_timer->setText("120 min"); break;
-        case 7: ui->lb_timer->setText("180 min"); break;
-        case 8: ui->lb_timer->setText("no limit"); break;
+        case 5: ui->lb_timer->setText("1 hour"); break;
+        case 6: ui->lb_timer->setText("2 hour"); break;
+        case 7: ui->lb_timer->setText("3 hour"); break;
+        case 8: ui->lb_timer->setText("4 hour"); break;
     }
 }
 
-int NewGameDialog::convertToTimer()
+int NewGameOfflineDialog::convertToTimer()
 {
     int tim;
     switch (m_timer) {
@@ -207,7 +210,7 @@ int NewGameDialog::convertToTimer()
     return tim;
 }
 
-int NewGameDialog::convertToTimeInc()
+int NewGameOfflineDialog::convertToTimeInc()
 {
     int tim;
     switch (m_timer) {
@@ -224,7 +227,7 @@ int NewGameDialog::convertToTimeInc()
     return tim;
 }
 
-void NewGameDialog::setTimeInc(int time)
+void NewGameOfflineDialog::setTimeInc(int time)
 {
     switch (time) {
         case 0: ui->lb_timeInc->setText("0 s"); break;
@@ -239,7 +242,7 @@ void NewGameDialog::setTimeInc(int time)
     }
 }
 
-void NewGameDialog::readSetting()
+void NewGameOfflineDialog::readSetting()
 {
     QSettings setting;
     m_timer = setting.value("CPU-timer").toInt();
@@ -251,8 +254,15 @@ void NewGameDialog::readSetting()
     m_variant = setting.value("CPU-variant").toInt();
 }
 
-void NewGameDialog::writeSetting()
+void NewGameOfflineDialog::writeSetting()
 {
+    m_timer = ui->slider_timer->value();
+    m_timeInc = ui->slider_timeInc->value();
+    m_skillLevel = ui->slider_skillLevel->value();
+    m_color = ui->btn_playerColor->isChecked();
+    m_variant = ui->comboBox_variant->currentIndex();
+
+
     QSettings setting;
     setting.setValue("CPU-timer",m_timer);
     setting.setValue("CPU-timerInc",m_timeInc);
@@ -264,7 +274,7 @@ void NewGameDialog::writeSetting()
 }
 
 
-void NewGameDialog::on_btn_playerColor_toggled(bool checked)
+void NewGameOfflineDialog::on_btn_playerColor_toggled(bool checked)
 {
     m_color = checked;
     if(checked){       
@@ -274,19 +284,19 @@ void NewGameDialog::on_btn_playerColor_toggled(bool checked)
     }
 }
 
-void NewGameDialog::on_slider_timer_valueChanged(int value)
+void NewGameOfflineDialog::on_slider_timer_valueChanged(int value)
 {
     m_timer = value;
     setTimer(m_timer);
 }
 
-void NewGameDialog::on_slider_timeInc_valueChanged(int value)
+void NewGameOfflineDialog::on_slider_timeInc_valueChanged(int value)
 {
     m_timeInc = value;
     setTimeInc(m_timeInc);
 }
 
-void NewGameDialog::on_slider_skillLevel_valueChanged(int value)
+void NewGameOfflineDialog::on_slider_skillLevel_valueChanged(int value)
 {
     if(m_limitStrenger){
         m_elo = value;
@@ -299,16 +309,18 @@ void NewGameDialog::on_slider_skillLevel_valueChanged(int value)
 }
 
 
-void NewGameDialog::on_btn_limitStrength_toggled(bool checked)
+void NewGameOfflineDialog::on_btn_limitStrength_toggled(bool checked)
 {
     m_limitStrenger = checked;
     if(m_limitStrenger==false){
+        ui->btn_limitStrength->setText("Full Strength");
         ui->labelSkillLevel->setText("Skill Level");
         ui->slider_skillLevel->setValue(m_skillLevel);
         ui->slider_skillLevel->setMinimum(0);
         ui->slider_skillLevel->setMaximum(10);
         ui->lb_skillLevel->setText(QString::number(m_skillLevel));
     }else{
+        ui->btn_limitStrength->setText("Limit Strength");
         ui->labelSkillLevel->setText("UCI-ELO");
         ui->slider_skillLevel->setValue(m_elo);
         ui->slider_skillLevel->setMinimum(1150);
@@ -317,20 +329,19 @@ void NewGameDialog::on_btn_limitStrength_toggled(bool checked)
     }
 }
 
-void NewGameDialog::on_btn_close_clicked()
+void NewGameOfflineDialog::on_btn_close_clicked()
 {
     close();
 }
 
-void NewGameDialog::on_btn_ok_clicked()
+void NewGameOfflineDialog::on_btn_ok_clicked()
 {
     writeSetting();
 //    finished(QDialog::Accepted);
     accept();
 }
 
-void NewGameDialog::on_comboBox_variant_currentIndexChanged(int index)
+void NewGameOfflineDialog::on_comboBox_variant_currentIndexChanged(int index)
 {
     m_variant = index;
-    qDebug()<<"indexVariant:"<<index;
 }

@@ -26,12 +26,12 @@ GraphicsPiece::GraphicsPiece(const Chess::Piece& piece,
 			     const QString& elementId,
 			     QGraphicsItem* parent)
 	: QGraphicsObject(parent),
+      m_elementId(elementId),
 	  m_piece(piece),
       m_rect(-squareSize / 2, -squareSize / 2,
-          squareSize, squareSize),
-	  m_elementId(elementId),
+      squareSize, squareSize),
       m_container(nullptr),
-    isError(false)
+      isError(false)
 {
 	setAcceptedMouseButtons(Qt::LeftButton);
 	setCacheMode(DeviceCoordinateCache);

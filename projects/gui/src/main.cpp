@@ -16,7 +16,7 @@
     along with Cute Chess.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "cutechessapp.h"
+#include "robochessapp.h"
 
 #include <QLoggingCategory>
 #include <QTextStream>
@@ -40,8 +40,9 @@ int main(int argc, char* argv[])
 	qRegisterMetaType<Chess::Result>("Chess::Result");
 	qRegisterMetaType<MoveEvaluation>("MoveEvaluation");
 
-    CuteChessApplication app(argc, argv);
+    RobochessApplication app(argc, argv);
 
-    app.newDefaultGame();
+//    app.newDefaultGame();
+//    app.newGameWindow();
     return app.exec();
 }

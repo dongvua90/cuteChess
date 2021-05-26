@@ -5,21 +5,29 @@
 #include <QTimerEvent>
 #include <QDebug>
 #include <QString>
+#include "robochessapp.h"
 
-TaskInfo::TaskInfo()
+TaskInfo::TaskInfo(QWidget *parent) : QWidget(parent)
 {
+    timer = new QTimer();
     wifi = new QLabel();
     sound = new QLabel();
     battery = new QLabel();
+    battery_charging = new QLabel();
     QHBoxLayout *layout = new QHBoxLayout();
 
 
     wifi->setPixmap(QPixmap(":/ui/wifi_signal3.png"));
     sound->setPixmap(QPixmap(":/ui/sound_on.png"));
     battery->setPixmap(QPixmap(":/ui/battery_level4.png"));
+    battery_charging->setPixmap(QPixmap(":ui/charger.png"));
     wifi->setFixedWidth(50);
     sound->setFixedWidth(40);
     battery->setFixedWidth(30);
+
+    battery_charging->setParent(battery);
+    battery_charging->move(6,6);
+    battery_charging->setVisible(false);
 
     layout->setAlignment(Qt::AlignRight);
     layout->setMargin(0);
@@ -30,6 +38,8 @@ TaskInfo::TaskInfo()
     setFixedWidth(130);
     setLayout(layout);
 
+    connect(timer,&QTimer::timeout,this,&TaskInfo::update);
+    timer->start(1000);
 }
 
 void TaskInfo::setWifiSignal(uint8_t signal)
@@ -59,6 +69,21 @@ void TaskInfo::onValue(int value)
     qDebug()<<"onValue:"<<value;
 }
 
+void TaskInfo::update()
+{
+    setWifiSignal(RobochessApplication::instance()->info_wifi);
+    setBattery(RobochessApplication::instance()->info_sound);
+    setCharger(RobochessApplication::instance()->info_battery_charger);
+    if(RobochessApplication::instance()->info_battery_charger && RobochessApplication::instance()->info_battery==0)
+    {
+        RobochessApplication::instance()->info_battery = 1;
+        setBattery(1);
+    }else{
+        setBattery(RobochessApplication::instance()->info_battery);
+    }
+    setSound(RobochessApplication::instance()->info_sound);
+}
+
 void TaskInfo::setSound(bool enable)
 {
     if(enable)
@@ -86,7 +111,10 @@ void TaskInfo::setBattery(uint8_t bat)
         break;
     case 5: battery->setPixmap(QPixmap(":/ui/battery_level5.png"));
         break;
-    case 6: battery->setPixmap(QPixmap(":/res/battery_chager.png"));
-        break;
     }
+}
+
+void TaskInfo::setCharger(bool ischarging)
+{
+    battery_charging->setVisible(ischarging);
 }

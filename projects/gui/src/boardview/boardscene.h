@@ -80,7 +80,8 @@ class BoardScene : public QGraphicsScene
         GraphicsPiece* pieceAt(const QPointF& pos) const;
         QMultiMap<GraphicsPiece*, Chess::Square> m_targets;
         QPointF m_sourcePos;
-        void tryMove(GraphicsPiece* piece, const QPointF& targetPos);
+        void movePiece(QString move);
+        void tryMove(GraphicsPiece* piece, const QPointF& targetPos,int ispromotion=0);
 
         QPointF squarePos(const Chess::Square& square) const;
 	public slots:
@@ -110,6 +111,7 @@ class BoardScene : public QGraphicsScene
 		 */
 		void onGameFinished(ChessGame* game, Chess::Result result);
 
+
         //edit
         void setPieceError(uint8_t currentBoard[64]);
 
@@ -122,7 +124,7 @@ class BoardScene : public QGraphicsScene
 		 */
 		void humanMove(const Chess::GenericMove& move,
 			       const Chess::Side& side);
-        void humanMoveError();
+        void humanMoveError(QString info);
         void humanMakeMove(QString move);
 
 	protected:

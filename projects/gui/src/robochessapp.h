@@ -31,36 +31,27 @@ class GameManager;
 class MainWindow;
 class ChessGame;
 
-class CuteChessApplication : public QApplication
+class RobochessApplication : public QApplication
 {
 	Q_OBJECT
 
 	public:
-		CuteChessApplication(int& argc, char* argv[]);
-		virtual ~CuteChessApplication();
+        RobochessApplication(int& argc, char* argv[]);
+        virtual ~RobochessApplication();
+
 		GameManager* gameManager();
+        static RobochessApplication* instance(); // dùng để truy cập chính class này
+//        Robot *robot;               // class để thao tác với phần cứng robot
+//        ThreadIR *mythread;         // class tạo 1 thread mới để lấy tín hiệu IR_remote
+        VirtualKeyboard *vtKeyboard;// class tạo bàn phím ảo
+        Lichess *lichess;           // class các chức năng của lichess
+        MainWindow* mainWindow;     // class giao diện chính
 
-		static CuteChessApplication* instance();
-		static QString userName();
-
-        Robot *robot;
-        Robot* getIntanceRobot();
-        ThreadIR *mythread;
-        ThreadIR* getIntanceThreadIr();
-        VirtualKeyboard *vtKeyboard;
-        Lichess *lichess;
-	public slots:
-		MainWindow* newGameWindow(ChessGame* game);
-		void newDefaultGame();
-		void onQuitAction();
-
+        int info_wifi,info_battery=2;
+        bool info_battery_charger=false;
+        bool info_sound = false;
 	private:
-		GameManager* m_gameManager;
-		bool m_initialWindowCreated;
-
-
-	private slots:
-		void onLastWindowClosed();
+        GameManager* m_gameManager; // class quản lý game
 };
 
 #endif // CUTE_CHESS_APPLICATION_H

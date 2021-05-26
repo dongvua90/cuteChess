@@ -74,7 +74,7 @@ void HumanPlayer::onHumanMove(const Chess::GenericMove& move,
 	if (side != this->side())
 		return;
 
-	Q_ASSERT(m_bufferMove.isNull());
+    Q_ASSERT(m_bufferMove.isNull());
 	if (state() != Thinking)
 	{
 		if (state() == Observing)

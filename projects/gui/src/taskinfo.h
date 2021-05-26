@@ -3,20 +3,26 @@
 
 #include <QWidget>
 #include <QLabel>
+#include <QTimer>
+
 class TaskInfo : public QWidget
 {
     Q_OBJECT
 public:
-    TaskInfo();
+    TaskInfo(QWidget *parent = nullptr);
     void setSound(bool enable);
     void setBattery(uint8_t bat);
+    void setCharger(bool ischarging);
 public slots:
     void setWifiSignal(uint8_t signal);
     void onInfo();
     void onValue(int);
 
 private:
-    QLabel *wifi,*sound,*battery;
+    QLabel *wifi,*sound,*battery,*battery_charging;
+    QTimer *timer;
+private slots:
+    void update();
 };
 
 #endif // TASKINFO_H

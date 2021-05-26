@@ -13,11 +13,14 @@ class FirstScreen : public QDialog
     Q_OBJECT
 public:
     explicit FirstScreen(QWidget *parent = nullptr);
+public slots:
+    void changeUserName(QString username);
 
 signals:
     void onCpuGame();
-    void onOnlineGame();
+    void onGameonlineFriend();
     void onGameonlineComputer();
+    void onSettings();
 
 private slots:
     void on_battery_changed(int bat,bool isChanger);

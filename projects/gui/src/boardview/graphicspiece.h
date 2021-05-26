@@ -76,7 +76,7 @@ class GraphicsPiece : public QGraphicsObject
         // set error piece
         void setPieceError(bool err);
         bool getPieceError();
-
+        QString m_elementId;
 	public slots:
 		/*!
 		 * Restores the parent item (container).
@@ -91,7 +91,7 @@ class GraphicsPiece : public QGraphicsObject
 	private:
 		Chess::Piece m_piece;
 		QRectF m_rect;
-		QString m_elementId;
+
 		QGraphicsItem* m_container;
         //edit
         bool isError;

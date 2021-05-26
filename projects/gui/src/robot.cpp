@@ -1,6 +1,6 @@
 #include "robot.h"
 #include <QDebug>
-#include "cutechessapp.h"
+#include "robochessapp.h"
 
 #define ADDR_BOARD 0x19
 #define ADDR_MAINBOARD 0x10

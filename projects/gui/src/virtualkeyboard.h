@@ -9,8 +9,9 @@ class VirtualKeyboard :public QDialog
 {
     Q_OBJECT
 public:
-    VirtualKeyboard();
+    VirtualKeyboard(QWidget *parent=nullptr);
     QString data;
+    enum EDITING{INPUT_FRIEND,INPUT_TOKEN}editing;
 public  slots:
     void setData(QString dat);
 signals:

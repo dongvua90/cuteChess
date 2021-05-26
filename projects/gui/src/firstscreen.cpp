@@ -1,6 +1,6 @@
 #include "firstscreen.h"
 #include "ui_firstscreen.h"
-#include "cutechessapp.h"
+#include "robochessapp.h"
 
 FirstScreen::FirstScreen(QWidget *parent) : QDialog(parent)
   ,ui(new Ui::Fristscreen)
@@ -11,8 +11,15 @@ FirstScreen::FirstScreen(QWidget *parent) : QDialog(parent)
     info = new TaskInfo();
     ui->header_layout->addWidget(info);
 
-  robot = CuteChessApplication::instance()->getIntanceRobot();
-  connect(robot,&Robot::onBatteryChanged,this,&FirstScreen::on_battery_changed);
+//  robot = RobochessApplication::instance()->robot;
+    //  connect(robot,&Robot::onBatteryChanged,this,&FirstScreen::on_battery_changed);
+
+    connect(RobochessApplication::instance()->lichess,&Lichess::usernameChanged,this,&FirstScreen::changeUserName);
+}
+
+void FirstScreen::changeUserName(QString username)
+{
+    ui->lb_username->setText(username);
 }
 
 void FirstScreen::on_battery_changed(int bat, bool isChanger)
@@ -37,10 +44,8 @@ void FirstScreen::on_battery_changed(int bat, bool isChanger)
 
 void FirstScreen::on_btn_friend_clicked()
 {
-
-//    close();
     setVisible(false);
-    emit onOnlineGame();
+    emit onGameonlineFriend();
 }
 
 void FirstScreen::on_btn_computer_clicked()
@@ -51,7 +56,8 @@ void FirstScreen::on_btn_computer_clicked()
 
 void FirstScreen::on_setting_clicked()
 {
-
+    setVisible(false);
+    emit onSettings();
 }
 
 void FirstScreen::on_btn_playOffline_clicked()

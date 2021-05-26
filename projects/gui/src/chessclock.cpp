@@ -21,6 +21,7 @@
 #include <QTimerEvent>
 #include <QLabel>
 #include <QVBoxLayout>
+#include <QHBoxLayout>
 #include <QDebug>
 
 
@@ -30,13 +31,14 @@ ChessClock::ChessClock(bool posUp,QWidget* parent)
 	  m_timerId(-1),
 	  m_infiniteTime(false),
 	  m_nameLabel(new QLabel()),
-	  m_timeLabel(new QLabel())
+      m_timeLabel(new QLabel())
 {
+    taskinfo = new TaskInfo();
 	m_defaultPalette = m_timeLabel->palette();
     m_headerPalette = m_timeLabel->palette();
     m_defaultPalette.setColor(QPalette::Window,Qt::blue);
-    m_headerPalette.setColor(QPalette::Background,Qt::gray);
-
+    m_headerPalette.setColor(QPalette::Background,QColor(43,23,0));
+    m_headerPalette.setColor(QPalette::WindowText,QColor(78,224,207));
     m_timeLabel->setAutoFillBackground(true);
 
 	m_nameLabel->setTextFormat(Qt::RichText);
@@ -58,12 +60,15 @@ ChessClock::ChessClock(bool posUp,QWidget* parent)
     m_timeLabel->setMargin(5);
     m_nameLabel->setMargin(5);
 
+
 	QVBoxLayout* layout = new QVBoxLayout();
     layout->setMargin(0);
     layout->setContentsMargins(0,0,0,0);
     layout->setAlignment(Qt::AlignTop);
     layout->setSpacing(0);
     if(posUp){
+        taskinfo->setParent(m_nameLabel);
+        taskinfo->move(350,0);
         layout->addWidget(m_nameLabel);
         layout->addWidget(m_timeLabel);
     }else{

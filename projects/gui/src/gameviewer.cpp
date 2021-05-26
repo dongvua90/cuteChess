@@ -29,6 +29,11 @@
 #include "boardview/boardscene.h"
 #include "boardview/boardview.h"
 #include "chessclock.h"
+#include <QPropertyAnimation>
+#include <QParallelAnimationGroup>
+#include <QSequentialAnimationGroup>
+#include <QGraphicsPolygonItem>
+#include <QGraphicsTextItem>
 
 #include <QPushButton>
 #include <QLabel>
@@ -38,12 +43,10 @@
 #include <board/board.h>
 
 
-GameViewer::GameViewer(Qt::Orientation orientation,
-                       QWidget* parent,
-                       bool addChessClock)
+GameViewer::GameViewer(QWidget* parent)
 	: QWidget(parent),
-	  m_viewPreviousMoveBtn(new QToolButton),
-	  m_viewNextMoveBtn(new QToolButton),
+      m_viewPreviousMoveBtn(new QToolButton),
+      m_viewNextMoveBtn(new QToolButton),
 	  m_moveIndex(0),
       m_humanGame(false)
 {
@@ -52,32 +55,32 @@ GameViewer::GameViewer(Qt::Orientation orientation,
 	m_boardView = new BoardView(m_boardScene, this);
 	m_boardView->setEnabled(false);
 
-	m_viewPreviousMoveBtn->setEnabled(false);
-	m_viewPreviousMoveBtn->setAutoRaise(true);
+    m_viewPreviousMoveBtn->setEnabled(false);
+    m_viewPreviousMoveBtn->setAutoRaise(true);
     m_viewPreviousMoveBtn->setMinimumSize(32, 32);
-	m_viewPreviousMoveBtn->setToolTip(tr("Previous move"));
-	m_viewPreviousMoveBtn->setIcon(QIcon(":/icons/toolbutton/previous_16x16"));
-	connect(m_viewPreviousMoveBtn, SIGNAL(clicked()),
-		this, SLOT(viewPreviousMoveClicked()));
+    m_viewPreviousMoveBtn->setToolTip(tr("Previous move"));
+    m_viewPreviousMoveBtn->setIcon(QIcon(":/icons/toolbutton/previous_16x16"));
+    connect(m_viewPreviousMoveBtn, SIGNAL(clicked()),
+        this, SLOT(viewPreviousMoveClicked()));
 
-	m_viewNextMoveBtn->setEnabled(false);
-	m_viewNextMoveBtn->setAutoRaise(true);
+    m_viewNextMoveBtn->setEnabled(false);
+    m_viewNextMoveBtn->setAutoRaise(true);
     m_viewNextMoveBtn->setMinimumSize(32, 32);
-	m_viewNextMoveBtn->setToolTip(tr("Next move"));
-	m_viewNextMoveBtn->setIcon(QIcon(":/icons/toolbutton/next_16x16"));
-	connect(m_viewNextMoveBtn, SIGNAL(clicked()),
-		this, SLOT(viewNextMoveClicked()));
+    m_viewNextMoveBtn->setToolTip(tr("Next move"));
+    m_viewNextMoveBtn->setIcon(QIcon(":/icons/toolbutton/next_16x16"));
+    connect(m_viewNextMoveBtn, SIGNAL(clicked()),
+        this, SLOT(viewNextMoveClicked()));
 
 	QHBoxLayout* controls = new QHBoxLayout();
 	controls->setContentsMargins(0, 0, 0, 0);
 	controls->setSpacing(0);
-	controls->addWidget(m_viewPreviousMoveBtn);
+    controls->addWidget(m_viewPreviousMoveBtn);
     controls->addWidget(m_viewNextMoveBtn);
-
+//    clockLayout->addLayout(controls);
 
 
     //begin add layout main
-    setFixedSize(580,272);
+    setFixedSize(550,272);
 
     QHBoxLayout* layout = new QHBoxLayout();
 	layout->setContentsMargins(0, 0, 0, 0);
@@ -89,44 +92,57 @@ GameViewer::GameViewer(Qt::Orientation orientation,
     QVBoxLayout* clockLayout = new QVBoxLayout();
 
     m_chessClock[0] = new ChessClock(true);
+    m_chessClock[0]->setMaximumWidth(480);
     clockLayout->addWidget(m_chessClock[0]);
 // begin add mid layout
-    QHBoxLayout *midLayout = new QHBoxLayout();
+    QVBoxLayout *midLayout = new QVBoxLayout();
     midLayout->setMargin(0);
     midLayout->setContentsMargins(0,0,0,0);
     midLayout->setSpacing(0);
 
+    //MoveList
+    QHBoxLayout *layout_info = new QHBoxLayout();
+    mvlist =new MoveList();
+    lb_info =   new QLabel();
+    QFont lbinfofont = lb_info->font();
+    lbinfofont.setPointSize(12);
+//    lbinfofont.setBold(true);
+    lb_info->setFont(lbinfofont);
+    lb_info->setText("");
+    layout_info->addWidget(lb_info);
+    layout_info->addWidget(mvlist);
+    mvlist->setVisible(false);
 
-//    clockLayout->addLayout(controls);
-
+    QHBoxLayout *layout_tool = new QHBoxLayout();
     // btn extern
     btn_extern = new QPushButton();
-//    btn_extern->setText("<<");
     btn_extern->setFixedWidth(30);
-    btn_extern->setFixedHeight(92);
-    btn_extern->setStyleSheet("QPushButton{background-color:pink; border-radius:0px;font:20px;}"
-    "QPushButton:checked{background-color:red; border-radius:0px;}");
+    btn_extern->setFixedHeight(30);
     btn_extern->setCheckable(true);
     btn_extern->setIcon(QIcon(":/icons/toolbutton/previous_16x16"));
     connect(btn_extern,&QPushButton::clicked,this,&GameViewer::onExternClicked);
-
-    //MoveList
-    mvlist =new MoveList();
-
-
-
     //btn menu
     btn_menu = new QPushButton();
     btn_menu->setText("M");
-    btn_menu->setFixedWidth(30);
-    btn_menu->setFixedHeight(92);
-    btn_menu->setStyleSheet("QPushButton{background-color:pink; border-radius:0px;font:20px;}QPushButton:pressed{background-color:red; border-radius:0px;}");
+    btn_menu->setFixedSize(30,30);
+//    btn_menu->setStyleSheet("QPushButton{background-color:pink; border-radius:0px;font:20px;}QPushButton:pressed{background-color:red; border-radius:0px;}");
     connect(btn_menu,SIGNAL(clicked()),this,SLOT(onMenuClicked()));
+    //btn change info
+    btn_change_info = new QPushButton();
+    btn_change_info->setFixedSize(30,30);
+    btn_change_info->setCheckable(true);
+    btn_change_info->setIcon(QIcon(":/icons/toolbutton/clone_16x16"));
+    connect(btn_change_info,&QPushButton::clicked,this,&GameViewer::onChangeView);
+    layout_tool->addWidget(btn_extern);
+    layout_tool->addWidget(btn_menu);
+    layout_tool->addWidget(btn_change_info);
 
-    midLayout->addWidget(btn_extern);
-//    midLayout->addWidget(lb_move);
-    midLayout->addWidget(mvlist);
-    midLayout->addWidget(btn_menu);
+
+    midLayout->addLayout(layout_info);
+    midLayout->addLayout(layout_tool);
+
+
+
 
     clockLayout->addLayout(midLayout);
 //end of mid layout
@@ -138,11 +154,16 @@ GameViewer::GameViewer(Qt::Orientation orientation,
     clockLayout->setMargin(0);
 
     layout->addLayout(clockLayout);
+    layout->setSpacing(0);
     //debug
     QVBoxLayout *layout_debug = new QVBoxLayout();
+    layout_debug->setSpacing(0);
+    layout_debug->setMargin(0);
     btn_move=new QPushButton();
     btn_move->setText("move");
+    btn_move->setMaximumWidth(70);
     le_move = new QLineEdit();
+    le_move->setMaximumWidth(70);
     layout_debug->addWidget(le_move);
     layout_debug->addWidget(btn_move);
     layout->addLayout(layout_debug);
@@ -161,6 +182,16 @@ MenuScreen *GameViewer::getMenu()
     return menu;
 }
 
+void GameViewer::setNotify(QString notify)
+{
+    lb_info->setText(notify);
+}
+
+QString GameViewer::getNotify()
+{
+    return lb_info->text();
+}
+
 void GameViewer::autoFlip()
 {
 	if (QSettings().value("ui/auto_flip_board_for_human_games",false).toBool())
@@ -170,8 +201,6 @@ void GameViewer::autoFlip()
 void GameViewer::setGame(ChessGame* game)
 {
 	Q_ASSERT(game != nullptr);
-    //test
-//    mygame = game;
 	setGame(game->pgn());
 	m_game = game;
 
@@ -225,10 +254,10 @@ void GameViewer::setGame(const PgnGame* pgn)
 	m_moves.clear();
 	for (const PgnGame::MoveData& md : pgn->moves())
 		m_moves.append(md.move);
-	m_viewPreviousMoveBtn->setEnabled(false);
-	m_viewNextMoveBtn->setEnabled(!m_moves.isEmpty());
+    m_viewPreviousMoveBtn->setEnabled(false);
+    m_viewNextMoveBtn->setEnabled(!m_moves.isEmpty());
 
-	viewLastMove();
+    viewLastMove();
 }
 
 void GameViewer::disconnectGame()
@@ -263,108 +292,108 @@ BoardScene* GameViewer::boardScene() const
 
 void GameViewer::viewFirstMoveClicked()
 {
-	viewFirstMove();
-	emit moveSelected(m_moveIndex - 1);
+    viewFirstMove();
+    emit moveSelected(m_moveIndex - 1);
 }
 
 void GameViewer::viewFirstMove()
 {
-	while (m_moveIndex > 0)
-		viewPreviousMove();
+    while (m_moveIndex > 0)
+        viewPreviousMove();
 }
 
 void GameViewer::viewPreviousMoveClicked()
 {
-	viewPreviousMove();
-	emit moveSelected(m_moveIndex - 1);
+    viewPreviousMove();
+    emit moveSelected(m_moveIndex - 1);
 }
 
 void GameViewer::viewPreviousMove()
 {
-	m_moveIndex--;
+    m_moveIndex--;
 
-	if (m_moveIndex == 0)
-	{
-		m_viewPreviousMoveBtn->setEnabled(false);
-	}
+    if (m_moveIndex == 0)
+    {
+        m_viewPreviousMoveBtn->setEnabled(false);
+    }
 
-	m_boardScene->undoMove();
+    m_boardScene->undoMove();
 
-	m_viewNextMoveBtn->setEnabled(true);
-	m_boardView->setEnabled(false);
+    m_viewNextMoveBtn->setEnabled(true);
+    m_boardView->setEnabled(false);
 }
 
 void GameViewer::viewNextMoveClicked()
 {
-	viewNextMove();
-	emit moveSelected(m_moveIndex - 1);
+    viewNextMove();
+    emit moveSelected(m_moveIndex - 1);
 }
 
 void GameViewer::viewNextMove()
 {
-	m_boardScene->makeMove(m_moves.at(m_moveIndex++));
+    m_boardScene->makeMove(m_moves.at(m_moveIndex++));
 
-	m_viewPreviousMoveBtn->setEnabled(true);
+    m_viewPreviousMoveBtn->setEnabled(true);
 
-	if (m_moveIndex >= m_moves.count())
-	{
-		m_viewNextMoveBtn->setEnabled(false);
+    if (m_moveIndex >= m_moves.count())
+    {
+        m_viewNextMoveBtn->setEnabled(false);
 
-		if (!m_game.isNull()
-		&&  !m_game->isFinished() && m_game->playerToMove()->isHuman())
-			m_boardView->setEnabled(true);
-	}
+        if (!m_game.isNull()
+        &&  !m_game->isFinished() && m_game->playerToMove()->isHuman())
+            m_boardView->setEnabled(true);
+    }
 }
 
 void GameViewer::viewLastMoveClicked()
 {
-	viewLastMove();
-	emit moveSelected(m_moveIndex - 1);
+    viewLastMove();
+    emit moveSelected(m_moveIndex - 1);
 }
 
 void GameViewer::viewLastMove()
 {
-	while (m_moveIndex < m_moves.count())
-		viewNextMove();
+    while (m_moveIndex < m_moves.count())
+        viewNextMove();
 }
 
 void GameViewer::viewPositionClicked(int index)
 {
-	viewPosition(index);
-	emit moveSelected(m_moveIndex - 1);
+    viewPosition(index);
+    emit moveSelected(m_moveIndex - 1);
 }
 
 void GameViewer::viewPosition(int index)
 {
-	if (m_moves.isEmpty())
-		return;
+    if (m_moves.isEmpty())
+        return;
 
-	while (index < m_moveIndex)
-		viewPreviousMove();
-	while (index > m_moveIndex)
-		viewNextMove();
+    while (index < m_moveIndex)
+        viewPreviousMove();
+    while (index > m_moveIndex)
+        viewNextMove();
 }
 
 void GameViewer::viewMove(int index, bool keyLeft)
 {
-	Q_ASSERT(index >= 0);
-	Q_ASSERT(!m_moves.isEmpty());
+    Q_ASSERT(index >= 0);
+    Q_ASSERT(!m_moves.isEmpty());
 
-	if (keyLeft && index == m_moveIndex - 2)
-		viewPreviousMove();
-	else if (index < m_moveIndex)
-	{
-		// We backtrack one move too far and then make one
-		// move forward to highlight the correct move
-		while (index < m_moveIndex)
-			viewPreviousMove();
-		viewNextMove();
-	}
-	else
-	{
-		while (index + 1 > m_moveIndex)
-			viewNextMove();
-	}
+    if (keyLeft && index == m_moveIndex - 2)
+        viewPreviousMove();
+    else if (index < m_moveIndex)
+    {
+        // We backtrack one move too far and then make one
+        // move forward to highlight the correct move
+        while (index < m_moveIndex)
+            viewPreviousMove();
+        viewNextMove();
+    }
+    else
+    {
+        while (index + 1 > m_moveIndex)
+            viewNextMove();
+    }
 }
 
 void GameViewer::onFenChanged(const QString& fen)
@@ -372,8 +401,8 @@ void GameViewer::onFenChanged(const QString& fen)
 	m_moves.clear();
 	m_moveIndex = 0;
 
-	m_viewPreviousMoveBtn->setEnabled(false);
-	m_viewNextMoveBtn->setEnabled(false);
+    m_viewPreviousMoveBtn->setEnabled(false);
+    m_viewNextMoveBtn->setEnabled(false);
 	m_boardScene->setFenString(fen);
 }
 
@@ -383,11 +412,13 @@ void GameViewer::onMoveMade(const Chess::GenericMove& move)
 //           <<" to "<<move.targetSquare().file()<<move.targetSquare().rank();
 	m_moves.append(move);
 
-	if (m_moveIndex == m_moves.count() - 1)
-		viewNextMove();
+    if(m_moveIndex == m_moves.count() - 1){
+        viewNextMove();
+    }
 
-	if (m_humanGame)
-        autoFlip();
+    if(m_humanGame){
+       autoFlip();
+    }
 }
 
 void GameViewer::onExternClicked(bool checked)
@@ -406,49 +437,21 @@ void GameViewer::onMenuClicked()
     menu->show();
 }
 
-void GameViewer::makemove(uint8_t qFrom,uint8_t qTo,enum Robot::MOVETYPE move_type)
+void GameViewer::onChangeView(bool checked)
 {
-    m_boardScene->stopAnimation();
-    int m_file,m_rank;
-    m_file = qFrom%8;
-    m_rank = (63-qFrom)/8;
-    GraphicsPiece* piece = m_boardScene->pieceAt(boardScene()->squarePos(Chess::Square(m_file,m_rank)));
-    if (piece == nullptr) // nếu vị trí move_from ko phải là quân cờ thì di chuyển lỗi
+    if(checked)
     {
-        emit boardScene()->humanMoveError();
-        return;
+        mvlist->setVisible(true);
+        lb_info->setVisible(false);
+    }else{
+        mvlist->setVisible(false);
+        lb_info->setVisible(true);
     }
-    if (m_boardScene->m_targets.contains(piece))
-    {
-        m_boardScene->m_sourcePos = piece->scenePos();
-        piece->setParentItem(nullptr);
-        piece->setPos(m_boardScene->m_sourcePos);
-    }
-    m_boardScene->tryMove(piece, boardScene()->squarePos(Chess::Square(qTo%8,(63-qTo)/8)));
-
 }
 
-void GameViewer::makemove2(QString move, Chess::Side side)
+void GameViewer::makemove(QString move)
 {
-    m_boardScene->stopAnimation();
-    int m_file,m_rank,t_file,t_rank;
-    m_file = move.at(0).toLatin1()-97;
-    m_rank = move.at(1).toLatin1()-49;
-    t_file = move.at(2).toLatin1()-97;
-    t_rank = move.at(3).toLatin1()-49;
-    GraphicsPiece* piece = m_boardScene->pieceAt(boardScene()->squarePos(Chess::Square(m_file,m_rank)));
-    if (piece == nullptr) // nếu vị trí move_from ko phải là quân cờ thì di chuyển lỗi
-    {
-        emit boardScene()->humanMoveError();
-        return;
-    }
-    if (m_boardScene->m_targets.contains(piece))
-    {
-        m_boardScene->m_sourcePos = piece->scenePos();
-        piece->setParentItem(nullptr);
-        piece->setPos(m_boardScene->m_sourcePos);
-    }
-    m_boardScene->tryMove(piece, boardScene()->squarePos(Chess::Square(t_file,t_rank)));
+    m_boardScene->movePiece(move);
 }
 
 void GameViewer::onDebug()
@@ -462,7 +465,7 @@ void GameViewer::onDebug()
 
 void GameViewer::onMakemove()
 {
-    qDebug()<<"gameview_makemove";
+//    qDebug()<<"gameview_makemove";
     emit debugMakeMove(le_move->text());
 }
 

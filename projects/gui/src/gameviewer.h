@@ -29,6 +29,7 @@
 #include "movelist.h"
 #include "robot.h"
 #include <QLineEdit>
+#include <QLabel>
 class QToolButton;
 class QSlider;
 class ChessGame;
@@ -46,9 +47,7 @@ class GameViewer : public QWidget
 	Q_OBJECT
 
 	public:
-		explicit GameViewer(Qt::Orientation orientation = Qt::Horizontal,
-		                    QWidget* parent = nullptr,
-		                    bool addChessClock = false);
+        explicit GameViewer(QWidget* parent = nullptr);
 
 		void setGame(ChessGame* game);
 		void setGame(const PgnGame* pgn);
@@ -59,12 +58,15 @@ class GameViewer : public QWidget
         MenuScreen* getMenu();
 
         MoveList *mvlist;
+        void setNotify(QString notify);
+        QString getNotify();
 
 	public slots:
 		void viewMove(int index, bool keyLeft = false);
 
-         void makemove(uint8_t qFrom,uint8_t qTo,enum Robot::MOVETYPE move_type);
-         void makemove2(QString move,Chess::Side side);
+//         void makemove(uint8_t qFrom,uint8_t qTo,enum Robot::MOVETYPE move_type);
+//         void makemove2(QString move,Chess::Side side);
+         void makemove(QString move);
 
 	signals:
 		void moveSelected(int moveNumber);
@@ -72,17 +74,18 @@ class GameViewer : public QWidget
         void debugMakeMove(QString move);
 
 	private slots:
-		void viewFirstMoveClicked();
-		void viewPreviousMoveClicked();
-		void viewNextMoveClicked();
-		void viewLastMoveClicked();
-		void viewPositionClicked(int index);
+        void viewFirstMoveClicked();
+        void viewPreviousMoveClicked();
+        void viewNextMoveClicked();
+        void viewLastMoveClicked();
+        void viewPositionClicked(int index);
 
 		void onFenChanged(const QString& fen);
 		void onMoveMade(const Chess::GenericMove& move);
 
         void onExternClicked(bool checked);
         void onMenuClicked();
+        void onChangeView(bool checked);
 
 
         void onDebug();
@@ -90,22 +93,23 @@ class GameViewer : public QWidget
 
 	private:
 
-		void viewFirstMove();
-		void viewPreviousMove();
-		void viewNextMove();
-		void viewLastMove();
-		void viewPosition(int index);
+        void viewFirstMove();
+        void viewPreviousMove();
+        void viewNextMove();
+        void viewLastMove();
+        void viewPosition(int index);
 		void autoFlip();
 
 		BoardScene* m_boardScene;
 		BoardView* m_boardView;
 //		QSlider* m_moveNumberSlider;
-		ChessClock* m_chessClock[2];
+        ChessClock* m_chessClock[2];
+        QLabel *lb_info;
 
-		QToolButton* m_viewFirstMoveBtn;
-		QToolButton* m_viewPreviousMoveBtn;
-		QToolButton* m_viewNextMoveBtn;
-		QToolButton* m_viewLastMoveBtn;
+        QToolButton* m_viewFirstMoveBtn;
+        QToolButton* m_viewPreviousMoveBtn;
+        QToolButton* m_viewNextMoveBtn;
+        QToolButton* m_viewLastMoveBtn;
 
 		QPointer<ChessGame> m_game;
 		QVector<Chess::GenericMove> m_moves;
@@ -114,6 +118,7 @@ class GameViewer : public QWidget
 
         QPushButton *btn_extern;
         QPushButton *btn_menu;
+        QPushButton *btn_change_info;
 
         MenuScreen *menu;
         QLineEdit *text_move;

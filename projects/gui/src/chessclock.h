@@ -21,6 +21,8 @@
 
 #include <QWidget>
 #include <QElapsedTimer>
+#include "taskinfo.h"
+
 
 class QTimerEvent;
 class QLabel;
@@ -50,9 +52,12 @@ class ChessClock: public QWidget
 		bool m_infiniteTime;
 		QElapsedTimer m_time;
 		QLabel* m_nameLabel;
-		QLabel* m_timeLabel;
+        QLabel* m_timeLabel;
+
 		QPalette m_defaultPalette;
         QPalette m_headerPalette;
+
+        TaskInfo *taskinfo;
 };
 
 #endif // CHESSCLOCK

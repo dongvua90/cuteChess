@@ -40,9 +40,9 @@ const qreal s_squareSize = 34;
 
 BoardScene::BoardScene(QObject* parent)
 	: QGraphicsScene(parent),
-	  m_board(nullptr),
-	  m_direction(Forward),
 	  m_squares(nullptr),
+      m_board(nullptr),
+      m_direction(Forward),
 	  m_reserve(nullptr),
 	  m_chooser(nullptr),
 	  m_anim(nullptr),
@@ -151,7 +151,7 @@ void BoardScene::makeMove(const Chess::Move& move)
 	m_moveArrows = new QGraphicsItemGroup(m_squares);
 	m_moveArrows->setZValue(1);
 
-	Q_ASSERT(!move.isNull());
+        Q_ASSERT(!move.isNull());
 	Q_ASSERT(m_board->isLegalMove(move));
 
 	Chess::BoardTransition transition;
@@ -268,7 +268,7 @@ void BoardScene::mousePressEvent(QGraphicsSceneMouseEvent* event)
 		piece->setParentItem(nullptr);
 		piece->setPos(m_sourcePos);
 //        Chess::Square spos(m_squares->squareAt(m_sourcePos));
-        qDebug()<<"m_sourcePos x:"<<m_sourcePos.x()<<" y:"<<m_sourcePos.y();
+//        qDebug()<<"m_sourcePos x:"<<m_sourcePos.x()<<" y:"<<m_sourcePos.y();
 		QGraphicsScene::mousePressEvent(event);
     }
 	else
@@ -281,29 +281,13 @@ void BoardScene::mouseReleaseEvent(QGraphicsSceneMouseEvent* event)
     if (piece != nullptr && event->button() == Qt::LeftButton)
     {
         QPointF targetPos(m_squares->mapFromScene(event->scenePos()));
-//        tryMove(piece, targetPos);
-        Chess::Square spos(m_squares->squareAt(m_sourcePos));
-        QChar from_file,from_rank,to_file,to_rank;
-        from_file = spos.file()+97;
-        from_rank = spos.rank()+49;
-        Chess::Square tpos(m_squares->squareAt(targetPos));
-        to_file =   tpos.file()+97;
-        to_rank =   tpos.rank()+49;
-        QString move;
-        move.append(from_file);
-        move.append(from_rank);
-        move.append(to_file);
-        move.append(to_rank);
-        qDebug()<<"boardscene MoveMake:"<<move;
-        emit humanMakeMove(move);
-//        tryMove(piece, targetPos);
+        tryMove(piece, targetPos);
     }
     QGraphicsScene::mouseReleaseEvent(event);
 }
 
 void BoardScene::onTransitionFinished()
 {
-    qDebug("onTransitionfinish");
 	const auto drops = m_transition.drops();
 	if (m_direction == Backward)
 	{
@@ -359,6 +343,7 @@ void BoardScene::onTransitionFinished()
 
 void BoardScene::onPromotionChosen(const Chess::Piece& promotion)
 {
+    qDebug()<<"Piece Choose";
 	m_chooser = nullptr;
 	if (!promotion.isValid() && !m_moves.contains(m_promotionMove))
 	{
@@ -376,7 +361,8 @@ void BoardScene::onPromotionChosen(const Chess::Piece& promotion)
 void BoardScene::onGameFinished(ChessGame* game, Chess::Result result)
 {
 	Q_UNUSED(game);
-
+        Q_UNUSED(result);
+    return;
 	stopAnimation();
 	cancelUserMove();
 
@@ -400,14 +386,14 @@ void BoardScene::onGameFinished(ChessGame* game, Chess::Result result)
 	scAnim->setStartValue(text->scale());
 	scAnim->setEndValue(6.5);
 	scAnim->setEasingCurve(QEasingCurve::InOutQuad);
-	scAnim->setDuration(500);
+    scAnim->setDuration(1000);
 	group->addAnimation(scAnim);
 
 	auto opAnim = new QPropertyAnimation(text, "opacity");
 	opAnim->setStartValue(text->opacity());
 	opAnim->setEndValue(0.0);
 	opAnim->setEasingCurve(QEasingCurve::InOutQuad);
-	opAnim->setDuration(2500);
+    opAnim->setDuration(1500);
 	group->addAnimation(opAnim);
 
     group->start(QAbstractAnimation::DeleteWhenStopped);
@@ -469,7 +455,67 @@ GraphicsPiece* BoardScene::pieceAt(const QPointF& pos) const
 			return piece;
 	}
 
-	return nullptr;
+    return nullptr;
+}
+
+void BoardScene::movePiece(QString move)
+{
+
+    stopAnimation();
+    int m_file,m_rank,t_file,t_rank;
+    m_file = move.at(0).toLatin1()-97;
+    m_rank = move.at(1).toLatin1()-49;
+    t_file = move.at(2).toLatin1()-97;
+    t_rank = move.at(3).toLatin1()-49;
+    GraphicsPiece* piece = pieceAt(squarePos(Chess::Square(m_file,m_rank)));
+    if (piece == nullptr){
+        emit humanMoveError("not piece at ");
+        return;
+    }
+    // kiểm tra di chuyển nhập thành bên trắng cánh vua
+    // lưu ý: với lichess thì nước đi nhập thành thì ô start là ô của vua, ô đích là ô cách vua 2 ô.
+    if(piece->m_elementId =="K" && m_file==4 && m_rank==0 && t_file==6 && t_rank==0)
+    {
+        t_file =7; // điều chỉnh nước đi để lichess khớp với cutechess
+    }else if(piece->m_elementId =="K" && m_file==4 && m_rank==0 && t_file==2 && t_rank==0)
+    {
+        t_file =0;
+    }else if(piece->m_elementId =="k" && m_file==4 && m_rank==7 && t_file==6 && t_rank==7)
+    {
+        t_file = 7;
+    }else if(piece->m_elementId =="k" && m_file==4 && m_rank==7 && t_file==2 && t_rank==7)
+    {
+        t_file =0;
+    }
+
+    if (m_targets.contains(piece))
+    {
+        piece->setFlag(QGraphicsItem::ItemIsMovable, true);
+        m_sourcePos = piece->scenePos();
+        piece->setParentItem(nullptr);
+        piece->setPos(m_sourcePos);
+    }
+    else{
+        piece->setFlag(QGraphicsItem::ItemIsMovable, false);
+    }
+    QPointF targetPos(m_squares->mapFromScene(squarePos(Chess::Square(t_file,t_rank))));
+
+    if(move.length()>4){
+        int promotion=0;
+        QChar isPorimotion = move.at(4);
+        if(isPorimotion == 'q')
+            promotion = 5;
+        else if(isPorimotion=='r')
+            promotion = 4;
+        else if(isPorimotion =='b')
+            promotion = 3;
+        else if(isPorimotion =='n')
+            promotion = 2;
+        tryMove(piece, targetPos,promotion);
+    }else{
+            tryMove(piece, targetPos);
+    }
+
 }
 GraphicsPiece* BoardScene::createPiece(const Chess::Piece& piece)
 {
@@ -508,19 +554,13 @@ void BoardScene::stopAnimation()
 		m_anim->setCurrentTime(m_anim->totalDuration());
 }
 
-void BoardScene::tryMove(GraphicsPiece* piece, const QPointF& targetPos)
+void BoardScene::tryMove(GraphicsPiece* piece, const QPointF& targetPos,int ispromotion)
 {
-    qDebug("trymove");
 	Chess::Square target(m_squares->squareAt(targetPos));
-    Chess::Square spos(m_squares->squareAt(m_sourcePos));
-    qDebug()<<"move:"<<spos.file()<<"."<<spos.rank()<<" to "<<target.file()<<"-"<<target.rank();
 	// Illegal move
 	if (!m_targets.contains(piece, target))
 	{
-//		m_anim = pieceAnimation(piece, m_sourcePos);
-//		m_anim->start(QAbstractAnimation::DeleteWhenStopped);
-        qDebug()<<"move error:";
-        emit humanMoveError();
+        emit humanMoveError("piece canot move to ");
         return;
 	}
 	// Normal move
@@ -547,15 +587,18 @@ void BoardScene::tryMove(GraphicsPiece* piece, const QPointF& targetPos)
 		Chess::GenericMove move(source, target, 0);
 		if (promotions.size() > 1)
 		{
-			m_promotionMove = move;
-			selectPiece(promotions, SLOT(onPromotionChosen(Chess::Piece)));
+            if(ispromotion>1){//knight-2: bishop-3 rook-4 queen-5
+                move.setPromotion(ispromotion);
+                emit humanMove(move,m_board->sideToMove());
+            }else{
+                m_promotionMove = move;
+                selectPiece(promotions, SLOT(onPromotionChosen(Chess::Piece)));
+            }
 		}
 		else
 		{
-			move.setPromotion(promotions.first().type());
-			emit humanMove(move, m_board->sideToMove());
-//            qDebug()<<"humanmove:"<<move.sourceSquare().file()<<"-"<<move.sourceSquare().rank()
-//                   <<" to "<<move.targetSquare().file()<<"-"<<move.targetSquare().rank();
+            move.setPromotion(promotions.first().type());
+            emit humanMove(move, m_board->sideToMove());
 		}
 	}
 	// Piece drop
@@ -565,7 +608,6 @@ void BoardScene::tryMove(GraphicsPiece* piece, const QPointF& targetPos)
 					piece->pieceType().type());
 		emit humanMove(move, m_board->sideToMove());
 	}
-
 	m_highlightPiece = nullptr;
 	m_squares->clearHighlights();
 }
@@ -611,7 +653,6 @@ void BoardScene::addMoveArrow(const QPointF& sourcePos,
 void BoardScene::applyTransition(const Chess::BoardTransition& transition,
 				 MoveDirection direction)
 {
-    qDebug()<<"applyTranstion";
 	m_transition = transition;
 	m_direction = direction;
 

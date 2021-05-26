@@ -39,7 +39,7 @@ namespace Ui {
 /*!
  * \brief The NewGameDialog class provides a dialog for creating a new game.
  */
-class NewGameDialog : public QDialog
+class NewGameOfflineDialog : public QDialog
 {
 	Q_OBJECT
 
@@ -57,14 +57,15 @@ class NewGameDialog : public QDialog
 		 * Creates a "New Game" dialog with \a engineManager as the
 		 * source of engine configurations.
 		 */
-        NewGameDialog(QWidget* parent = nullptr);
+        NewGameOfflineDialog(QWidget* parent = nullptr);
 		/*! Destroys the dialog. */
-		virtual ~NewGameDialog();
+        virtual ~NewGameOfflineDialog();
 
 		/*! Creates and returns the ChessGame object. */
 		ChessGame* createGame() const;
 		/*! Creates and returns the PlayerBuilder for \a side. */
 		PlayerBuilder* createPlayerBuilder(Chess::Side side) const;
+        bool humanIsWhite();
 	private slots:
 
         void on_btn_playerColor_toggled(bool checked);
