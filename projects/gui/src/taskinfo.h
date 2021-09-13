@@ -11,7 +11,7 @@ class TaskInfo : public QWidget
 public:
     TaskInfo(QWidget *parent = nullptr);
     void setSound(bool enable);
-    void setBattery(uint8_t bat);
+    void setBattery(int bat);
     void setCharger(bool ischarging);
 public slots:
     void setWifiSignal(uint8_t signal);

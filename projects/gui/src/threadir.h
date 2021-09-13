@@ -24,6 +24,7 @@ public:
 
 signals:
     void onHumanEnter();
+    void onButtonTest();
 private:
     struct input_event ev[4];
     int checkIr();

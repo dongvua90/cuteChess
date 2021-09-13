@@ -32,6 +32,8 @@ private slots:
 
     void on_btn_inputtoken_clicked();
 
+    void on_btn_poweroff_clicked();
+
 private:
     Ui::DlgSettings *ui;
     QSettings *setting;

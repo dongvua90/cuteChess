@@ -9,7 +9,6 @@
 #include <QIODevice>
 #include <QSettings>
 #include <QObject>
-#include "lichessdata.h"
 #include "board/side.h"
 
 class PgnGame;
@@ -19,7 +18,6 @@ class Lichess   :public QObject
 public:
     Lichess();
     void getAccount();
-    LichessData lichessdata;
 
 
     enum GAME_STATE{GAME_STATE_ILDE,GAME_STATE_STARTING,GAME_STATE_RUNING,GAME_STATE_FINISH}gamestate;
@@ -79,8 +77,6 @@ private:
     QString m_initialFen;
 
     QNetworkAccessManager *netmanager;
-    QNetworkAccessManager *netmanager_stream;
-    QNetworkAccessManager *netmanager_move;
     QNetworkReply *reply;
     QNetworkReply *reply_getInfo;
     QNetworkReply *reply_streamGame;
@@ -92,6 +88,7 @@ private:
     QNetworkReply *reply_request;
     QNetworkReply *reply_abort;
     QNetworkReply *reply_resign;
+    QSslConfiguration sslconfig;
 
 private: signals:
     void onNewgame(QString idGame);

@@ -405,7 +405,7 @@ void BoardScene::setPieceError(uint8_t currentBoard[])
     uint8_t data_fen[65];
     int num=0;
     int k=0;
-    while(k<65)
+    while(k<65)     // chuyển định dạng Fen sang board_data
     {
         uint8_t piece = fen.at(num).unicode();
         num++;
@@ -423,6 +423,8 @@ void BoardScene::setPieceError(uint8_t currentBoard[])
          }
     }
 //    qDebug()<<"data:"<<QString::fromLocal8Bit((char*)data_fen);
+    /* so sánh tìm sự khác biệt */
+    int len_error=0;
     for(int j=0;j<64;j++){
         if(data_fen[j] != '_'){  //nếu ô chứa piece
             int m_file,m_rank;
@@ -433,11 +435,17 @@ void BoardScene::setPieceError(uint8_t currentBoard[])
             if(data_fen[j]!= currentBoard[j]) // nếu khác với board sensor
             {
                 piece->setPieceError(true);
+                len_error++;
             }else{
                 piece->setPieceError(false);
             }
+        }else{
+            if(data_fen[j]!= currentBoard[j]){
+                len_error++;
+            }
         }
     }
+    number_piece_error = len_error;
 }
 
 QPointF BoardScene::squarePos(const Chess::Square& square) const

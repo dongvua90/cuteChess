@@ -29,12 +29,12 @@
 #include "threadir.h"
 #include "board/genericmove.h"
 #include "newgameonlinecomputerdialog.h"
-#include "lichessdata.h"
 #include "newgameofflinedlg.h"
 #include "showdialog.h"
 #include "challengedialog.h"
 #include "settings.h"
 #include "robotdebug.h"
+#include "sound.h"
 
 namespace Chess {
 	class Board;
@@ -59,10 +59,12 @@ class MainWindow : public QMainWindow
 	public:
         explicit MainWindow();
 		virtual ~MainWindow();
+    GameViewer* m_gameViewer;
     Robot *robot;
     Robot* getRobot(); // trả lại đối tượng robot, vì chỉ được phép khởi tạo 1 đối tượng robot
     enum TypeGame{TYPEGAME_OFFLINE=0,TYPEGAME_COMPUTER,TYPEGAME_FRIEND,TYPEGAME_ONLINE};
     enum TypeGame typegame;
+    Sound sound;
 public: signals:
     void armMove(QString move);
     void requestMove();
@@ -110,7 +112,6 @@ private slots:
         void setCurrentGame();
         QString nameOnClock(const QString& name, Chess::Side side);
         QString convertMoveToString(Chess::GenericMove mov);
-		GameViewer* m_gameViewer;
 		MoveList* m_moveList;
 		QPointer<ChessPlayer> m_players[2];
 
@@ -129,13 +130,11 @@ private slots:
         bool humanIsWhite;
         int moves_length=0;
         // dialog
-        NewGameOfflineDialog        *dlg_newGameOffLine;
-        NewGameOnlineComputerDialog *dlg_newGameOnlineComputer;
-        NewgameOnlineFriendDlg      *dlg_newgameOnlineFriend;
+
         QDialog                     *dlg_challenge_cancel;
         ChallengeDialog             *dlg_challenge;
-        Settings                    *dlg_settings;
         ShowDialog *sdialog;
+
 
         // các biến dành cho việc khôi phục game cũ
         QTimer *timer_oldGameReturn;

@@ -4,7 +4,9 @@
 
 ThreadIR::ThreadIR(QObject *parent) :QThread(parent)
 {
-
+//    int fd = open("/sys/class/rc/rc0/protocols",O_WRONLY);
+//    write(fd,"+nec",4);
+//    close(fd);
 }
 
 void ThreadIR::run()
@@ -27,7 +29,7 @@ int ThreadIR::checkIr()
     int fd_ir;
     fd_ir = open("/dev/input/event1",O_RDONLY);
     if(fd_ir <0){
-       printf("error open device");
+       printf("IR-error open device");
        return -1;
     }
     while (1) {
@@ -44,6 +46,8 @@ int ThreadIR::checkIr()
                 printf("IRcode:%d\r\n",code);
                 if(code == IRCODE_ENTER)
                     emit onHumanEnter();
+                else if(code ==32769)
+                    emit onButtonTest();
             }
         }
     }

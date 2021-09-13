@@ -37,13 +37,14 @@ RobochessApplication::RobochessApplication(int& argc, char* argv[])
       m_gameManager(nullptr)
 {
 	Mersenne::initialize(QTime(0,0,0).msecsTo(QTime::currentTime()));
-//    robot = new Robot();
-//    mythread = new ThreadIR();
-//    mythread->start(QThread::LowPriority);
+    robot = new Robot();
+    mythread = new ThreadIR();
+    mythread->start(QThread::LowPriority);
     vtKeyboard = new VirtualKeyboard();
     lichess = new Lichess();
     mainWindow = new MainWindow();
     mainWindow->show();
+
 }
 
 RobochessApplication::~RobochessApplication()

@@ -72,15 +72,8 @@ void TaskInfo::onValue(int value)
 void TaskInfo::update()
 {
     setWifiSignal(RobochessApplication::instance()->info_wifi);
-    setBattery(RobochessApplication::instance()->info_sound);
+    setBattery(RobochessApplication::instance()->info_battery);
     setCharger(RobochessApplication::instance()->info_battery_charger);
-    if(RobochessApplication::instance()->info_battery_charger && RobochessApplication::instance()->info_battery==0)
-    {
-        RobochessApplication::instance()->info_battery = 1;
-        setBattery(1);
-    }else{
-        setBattery(RobochessApplication::instance()->info_battery);
-    }
     setSound(RobochessApplication::instance()->info_sound);
 }
 
@@ -95,9 +88,24 @@ void TaskInfo::setSound(bool enable)
     }
 }
 
-void TaskInfo::setBattery(uint8_t bat)
+void TaskInfo::setBattery(int bat)
 {
-    switch(bat)
+    int level=0;
+    if(bat >= 1600){
+        level = 5;
+    }else if(bat <1600 && bat >=1550){
+        level =4;
+    }else if(bat <1550 && bat >=1470){
+        level =3;
+    }else if(bat <1470 && bat >=1400){
+        level =2;
+    }else if(bat <1400 && bat >=1330){
+       level =1;
+    }else if(bat <1330){
+       level =0;
+    }
+
+    switch(level)
     {
     case 0: battery->setPixmap(QPixmap(":/ui/battery_error.png"));
         break;

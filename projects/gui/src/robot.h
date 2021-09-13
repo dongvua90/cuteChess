@@ -20,73 +20,69 @@
 #include <QObject>
 #include "threadir.h"
 #include "board/genericmove.h"
+#include <QProcess>
 
 class Robot :public QObject
 {
     Q_OBJECT
 public:
-    enum MOVETYPE{MOVE_PIECE=1,MOVE_KILL,MOVE_CASLLINGG_QUEEN,MOVE_CASLLING_KING,MOVE_HOME,MOVE_PASSANT};
-
+    enum MOVETYPE{MOVE_PIECE=1,MOVE_KILL,MOVE_CASLLINGG_QUEEN,MOVE_CASLLING_KING,MOVE_PASSANT,MOVE_HOME};
     Robot();
-    uint8_t data_board[64];             // chứa data được đọc từ bàn cờ
-     void printBoard(uint8_t dat[64]);
+    uint8_t data_board[64];                 // chứa data được đọc từ bàn cờ
+    uint8_t compression_board[32];
+    void printBoard(uint8_t dat[64]);
+
 public slots:
-    void humanEnabled(bool isHuman);
-    void robotMakeMove(const Chess::GenericMove& move);
-    void makeMove(int qFrom,int qTo,enum MOVETYPE move_type);
-    void setFenOrigin(QString fen);
-    void requestHumanMove();
-    void humanEnter();
-    void checkErrorBoard();
-    void onCheckMoveIsError();
-    void onCheckMoveIsOk();
+     void requestMakeMove();                // yêu cầu người chơi tạo 1 nước đi
+     void boardMoveError();                 // người chơi đi nước đi bị lỗi
+     void onButtonEnter();                  // nút nhấn IR xác nhận nước đi
+     void onButtonTest();                   // nút nhấn test
+     void armRobotMove(QString mov);
    signals:
-    void onMoveFinish();
-    void onPieceError(uint8_t board[64]);
-    void onHumanMakeMove(uint8_t qFrom,uint8_t qTo,enum MOVETYPE move_type);
-    void onHumanMoveError();
-    void onBatteryChanged(int bat,bool isChanger);
+    void armRobotMovedFinish();             // phát ra lệnh sau khi robot di chuyển xong 1 nước đi
+    void boardSensorMakeMove(QString mov);  // người chơi tạo 1 nước đi
+    void onHumanMoveError();                // phát ra lệnh khi người chơi di chuyển bị lỗi sơ cấp
+    void onPieceError(uint8_t board[64]);   // gửi thông tin bàn cờ đến boardScene, những quân cờ không có thực trên bàn cờ sẽ bị làm mờ
 private:
     /*Vaiable for Engine Move*/
-    enum MOVE_STATE{MOVE_NULL=0,MOVE_BEGIN,MOVE_STARTED,MOVE_RUNNING}engineMoveState;
     int engine_qFrom,engine_qTo;        //chứa vị trí ô di chuyển được gửi từ EngineChess.
     MOVETYPE engine_movetype;
     int tik_checkfinish=0;
+
     /*Vaiable for Fen change*/
-//    uint8_t data_board[64];             // chứa data được đọc từ bàn cờ
     uint8_t data_fen[64];               // chứa data chuẩn của game
-    uint8_t list_square_error[64];      // chứa vị trí ô piece bị lỗi.
-    uint8_t number_square_error;
-    /*Vaiable for Human Make Move */
-    enum HUMAN_MOVE{HUMAN_NULL=0,HUMAN_BEGIN,HUMAN_WAITING,HUMAN_MOVECHECKING,HUMAN_MOVEOK}human_turn;
-    uint8_t board_human_before[64];
-    uint8_t board_human_after[64];
-    bool isHumanEnter = false;
 
-    uint16_t battery,battery_save;
-    bool battery_is_changer,battery_is_changer_save;
-    bool move_is_running;
-    bool board_is_changed;
-    struct input_event ev[4];
-    int fd_ir;          // fd for check IR button
     QTimer *loopTime;
-    int tik_readInfo=0;
-    int tik_emitBoard = 0;
+
+    int readSensorBoard();              // sau lệnh đọc này dữ liệu được lưu vào data_board[]
+    int i2c_readInfoMainBoard();            // đọc các thông tin về battery,charger,moveFinish
+    int i2c_writeMoveMainBoard(uint8_t qfrom,uint8_t qto,enum MOVETYPE type);   //gửi lệnh di chuyển đến robot
+
+    int tik_taskStatus=0;
+    void taskStatus(); //frequency update 1Hz
+    int step_arm_move = 0,tik_delay_move_finish =0,tik_delay_edit_piece=0;
+    void taskArmMove(); // xử lý task robot di chuyển 1 nước đi
+    int step_getHumanMove=0,tik_timleft_edit_piece=0;
+    uint8_t board_human_before[64],board_human_after[64];
+    bool isHumanEnter = false;
+    void taskGetHumanMove();
 
 
-    int readSensorBoard(); // sau lệnh đọc này dữ liệu được lưu vào data_board[]
-    int readInfoMainBoard();
-    int writeMoveMainBoard(uint8_t qfrom,uint8_t qto,enum MOVETYPE type);
+    uint8_t extractBoard(uint8_t dat);
+    void extractBoardAll();
+
+    void makeMove(int qFrom, int qTo, Robot::MOVETYPE move_type);
+
     /* Action for check Button IR*/
     int initIrFile();
     int calculatorMove(uint8_t *board_before,uint8_t *board_after);
-//    void printBoard(uint8_t dat[64]);
-
-     QTimer *timeCheckError;
-
-    void convertFenToArraybyte(QString fen);
     void timeloop();
-    bool isHumanTurn = false;
+
+    void updateWifiSignal();
+
+
+    QString convertSquareToMove(int qFrom,int qTo);
+
 };
 
 #endif // ROBOT_H

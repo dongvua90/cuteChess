@@ -4,7 +4,6 @@ HEADERS += $$PWD/chessclock.h \
     $$PWD/challengedialog.h \
     $$PWD/firstscreen.h \
     $$PWD/lichess.h \
-    $$PWD/lichessdata.h \
     $$PWD/mainwindow.h \
     $$PWD/menuscreen.h \
     $$PWD/movelist.h \
@@ -22,6 +21,7 @@ HEADERS += $$PWD/chessclock.h \
     $$PWD/robotdebug.h \
     $$PWD/settings.h \
     $$PWD/showdialog.h \
+    $$PWD/sound.h \
     $$PWD/taskinfo.h \
     $$PWD/threadir.h \
     $$PWD/virtualkeyboard.h
@@ -30,7 +30,6 @@ SOURCES += $$PWD/main.cpp \
     $$PWD/chessclock.cpp \
     $$PWD/firstscreen.cpp \
     $$PWD/lichess.cpp \
-    $$PWD/lichessdata.cpp \
     $$PWD/mainwindow.cpp \
     $$PWD/menuscreen.cpp \
     $$PWD/movelist.cpp \
@@ -48,6 +47,7 @@ SOURCES += $$PWD/main.cpp \
     $$PWD/robotdebug.cpp \
     $$PWD/settings.cpp \
     $$PWD/showdialog.cpp \
+    $$PWD/sound.cpp \
     $$PWD/taskinfo.cpp \
     $$PWD/threadir.cpp \
     $$PWD/virtualkeyboard.cpp

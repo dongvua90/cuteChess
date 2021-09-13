@@ -21,6 +21,8 @@ macx-xcode {
 }
 
 QT += svg widgets concurrent printsupport network
+
+LIBS += -L /opt/openssl/lib -lssl -lcrypto
 greaterThan(QT_MAJOR_VERSION, 5) {
     QT += core5compat
 }

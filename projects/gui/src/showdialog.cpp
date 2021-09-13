@@ -5,7 +5,7 @@ ShowDialog::ShowDialog(QWidget *parent):QDialog(parent, Qt::FramelessWindowHint)
 {
     ui->setupUi(this);
     setAttribute(Qt::WA_TranslucentBackground);
-    move(140,120);
+    move(80,80);
     ui->btn_cancel->setVisible(false);
     ui->btn_ok->setVisible(false);
 

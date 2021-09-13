@@ -11,8 +11,10 @@ FirstScreen::FirstScreen(QWidget *parent) : QDialog(parent)
     info = new TaskInfo();
     ui->header_layout->addWidget(info);
 
-//  robot = RobochessApplication::instance()->robot;
-    //  connect(robot,&Robot::onBatteryChanged,this,&FirstScreen::on_battery_changed);
+    dlg_newGameOffLine          = new NewGameOfflineDialog();
+    dlg_newGameOnlineComputer   = new NewGameOnlineComputerDialog(this);
+    dlg_newgameOnlineFriend     = new NewgameOnlineFriendDlg(this);
+    dlg_settings                = new Settings(this);               // dialog settings
 
     connect(RobochessApplication::instance()->lichess,&Lichess::usernameChanged,this,&FirstScreen::changeUserName);
 }
@@ -22,46 +24,32 @@ void FirstScreen::changeUserName(QString username)
     ui->lb_username->setText(username);
 }
 
-void FirstScreen::on_battery_changed(int bat, bool isChanger)
-{
-    if(bat >= 1600){
-        info->setBattery(5);
-    }else if(bat <1600 && bat >=1550){
-        info->setBattery(4);
-    }else if(bat <1550 && bat >=1470){
-        info->setBattery(3);
-    }else if(bat <1470 && bat >=1400){
-        info->setBattery(2);
-    }else if(bat <1400 && bat >=1330){
-        info->setBattery(1);
-    }else if(bat <1330){
-        info->setBattery(0);
-    }
-    if(isChanger){
-        info->setBattery(6);
-    }
-}
-
 void FirstScreen::on_btn_friend_clicked()
 {
-    setVisible(false);
-    emit onGameonlineFriend();
+    if(dlg_newgameOnlineFriend->exec() == QDialog::Accepted)
+    {
+         emit onGameonlineFriend();
+    }
 }
 
 void FirstScreen::on_btn_computer_clicked()
 {
-    setVisible(false);
-    emit onGameonlineComputer();
+    if(dlg_newGameOnlineComputer->exec() == QDialog::Accepted)
+    {
+         emit onGameonlineComputer();
+    }
 }
 
 void FirstScreen::on_setting_clicked()
 {
-    setVisible(false);
-    emit onSettings();
+    dlg_settings->exec();
 }
 
 void FirstScreen::on_btn_playOffline_clicked()
 {
-    setVisible(false);
-    emit onCpuGame();
+   if(dlg_newGameOffLine->exec() == QDialog::Accepted)
+   {
+       emit onCpuGame();
+       close();
+   }
 }

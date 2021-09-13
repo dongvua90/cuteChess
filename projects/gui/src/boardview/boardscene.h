@@ -84,6 +84,7 @@ class BoardScene : public QGraphicsScene
         void tryMove(GraphicsPiece* piece, const QPointF& targetPos,int ispromotion=0);
 
         QPointF squarePos(const Chess::Square& square) const;
+        int number_piece_error=0;
 	public slots:
 		/*!
 		 * Clears the scene, creates a new board, and populates

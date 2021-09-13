@@ -1,6 +1,7 @@
 #include "settings.h"
 #include "ui_settings.h"
 #include "robochessapp.h"
+#include <QProcess>
 Settings::Settings(QWidget *parent) :QDialog(parent),
     ui(new Ui::DlgSettings)
 {
@@ -77,4 +78,12 @@ void Settings::on_btn_inputtoken_clicked()
     vtKeyboard->editing = vtKeyboard->INPUT_TOKEN;
     vtKeyboard->setData(token);
     vtKeyboard->exec();
+}
+
+void Settings::on_btn_poweroff_clicked()
+{
+    QProcess process;
+    process.start("poweroff",QIODevice::ReadOnly);
+    process.waitForFinished(100000);
+    process.deleteLater();
 }

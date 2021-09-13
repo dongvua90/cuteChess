@@ -1,15 +1,15 @@
 #include "lichess.h"
 #include <QDebug>
+#include <QJsonObject>
 
 Lichess::Lichess()
     :gamestate(GAME_STATE_ILDE)
 {
     netmanager = new QNetworkAccessManager();
-    netmanager_move = new QNetworkAccessManager();
-    netmanager_stream = new QNetworkAccessManager();
 //    m_token     = "rtNyYpS2tkjw8rTX";
     m_token       = setting.value("SETTING_TOKEN").toString();
     m_user_name  = setting.value("ONLINE-username").toString();
+    sslconfig.setPeerVerifyMode(QSslSocket::VerifyNone);
     getAccount();
     startStreamIncoming();
     connect(this,&Lichess::onNewgame,this,&Lichess::startStreamGame);
@@ -18,6 +18,7 @@ Lichess::Lichess()
 void Lichess::getAccount()
 {
     QNetworkRequest request(QUrl("https://lichess.org/api/account"));
+    request.setSslConfiguration(sslconfig);
     QString bearer = "Bearer ";
     bearer.append(m_token);
     request.setRawHeader("Authorization",bearer.toUtf8());
@@ -28,6 +29,7 @@ void Lichess::getAccount()
 void Lichess::ChallengeTheAI(int level,int time_limit,int time_inc,QString variant,bool color)
 {
     QNetworkRequest request(QUrl("https://lichess.org/api/challenge/ai"));
+    request.setSslConfiguration(sslconfig);
     QString bearer = "Bearer ";
     bearer.append(m_token);
     request.setRawHeader("Authorization",bearer.toUtf8());
@@ -54,6 +56,7 @@ void Lichess::ChallengeTheFriend(QString friend_name, bool rated, int time_limit
     QString url = "https://lichess.org/api/challenge/";
     url.append(friend_name);
     QNetworkRequest request(QUrl(url.toUtf8()));
+    request.setSslConfiguration(sslconfig);
     QString bearer = "Bearer ";
     bearer.append(m_token);
     request.setRawHeader("Authorization",bearer.toUtf8());
@@ -82,6 +85,7 @@ void Lichess::ChallengeTheFriend(QString friend_name, bool rated, int time_limit
 void Lichess::ChallengeTheWord(bool rated, int time_limit, int time_inc, QString variant, bool color)
 {
     QNetworkRequest request(QUrl("https://lichess.org/api/board/seek"));
+    request.setSslConfiguration(sslconfig);
     QString bearer = "Bearer ";
     bearer.append(m_token);
     request.setRawHeader("Authorization",bearer.toUtf8());
@@ -113,6 +117,7 @@ void Lichess::acceptChallenge()
     url.append(m_idChallenge);
     url.append("/accept");
     QNetworkRequest request(QUrl(url.toUtf8()));
+    request.setSslConfiguration(sslconfig);
     QString bearer = "Bearer ";
     bearer.append(m_token);
     request.setRawHeader("Authorization",bearer.toUtf8());
@@ -130,6 +135,7 @@ void Lichess::declineChallenge()
     url.append(m_idChallenge);
     url.append("/decline");
     QNetworkRequest request(QUrl(url.toUtf8()));
+    request.setSslConfiguration(sslconfig);
     QString bearer = "Bearer ";
     bearer.append(m_token);
     request.setRawHeader("Authorization",bearer.toUtf8());
@@ -147,6 +153,7 @@ void Lichess::cancelChallenge()
     url.append(m_idChallenge);
     url.append("/cancel");
     QNetworkRequest request(QUrl(url.toUtf8()));
+    request.setSslConfiguration(sslconfig);
     QString bearer = "Bearer ";
     bearer.append(m_token);
     request.setRawHeader("Authorization",bearer.toUtf8());
@@ -166,6 +173,7 @@ void Lichess::makeMove(QString move)
     url.append("/move/");
     url.append(move);
     QNetworkRequest request(QUrl(url.toUtf8()));
+    request.setSslConfiguration(sslconfig);
     QString bearer = "Bearer ";
     bearer.append(m_token);
     request.setRawHeader("Authorization",bearer.toUtf8());
@@ -174,7 +182,7 @@ void Lichess::makeMove(QString move)
     QUrlQuery postData;
     postData.addQueryItem("offeringDraw","false");
 
-    reply_makeMove = netmanager_move->post(request,postData.toString(QUrl::FullyEncoded).toUtf8());
+    reply_makeMove = netmanager->post(request,postData.toString(QUrl::FullyEncoded).toUtf8());
     connect(reply_makeMove, &QIODevice::readyRead, this, &Lichess::replyMakeMove);
 }
 
@@ -185,6 +193,7 @@ void Lichess::resignGame()
     url.append("/resign");
 //        qDebug()<<"UrlResign:"<<url;
     QNetworkRequest request(QUrl(url.toUtf8()));
+    request.setSslConfiguration(sslconfig);
     QString bearer = "Bearer ";
     bearer.append(m_token);
     request.setRawHeader("Authorization",bearer.toUtf8());
@@ -203,6 +212,7 @@ void Lichess::drawGame()
     url.append("/draw/true");
 //        qDebug()<<"UrlDraw:"<<url;
     QNetworkRequest request(QUrl(url.toUtf8()));
+    request.setSslConfiguration(sslconfig);
     QString bearer = "Bearer ";
     bearer.append(m_token);
     request.setRawHeader("Authorization",bearer.toUtf8());
@@ -221,6 +231,7 @@ void Lichess::makeRequestDraw()
     url.append(m_idGame);
     url.append("/move/e2e4");
     QNetworkRequest request(QUrl(url.toUtf8()));
+    request.setSslConfiguration(sslconfig);
     QString bearer = "Bearer ";
     bearer.append(m_token);
     request.setRawHeader("Authorization",bearer.toUtf8());
@@ -239,6 +250,7 @@ void Lichess::abortGame()
     url.append("/abort");
         qDebug()<<"UrlAbort:"<<url;
     QNetworkRequest request(QUrl(url.toUtf8()));
+    request.setSslConfiguration(sslconfig);
     QString bearer = "Bearer ";
     bearer.append(m_token);
     request.setRawHeader("Authorization",bearer.toUtf8());
@@ -253,8 +265,9 @@ void Lichess::abortGame()
 void Lichess::replyGetInfo()
 {
     QString data = reply_getInfo->readAll();
+    reply_getInfo->deleteLater();
     QJsonDocument doc = QJsonDocument::fromJson(data.toUtf8());
-    m_user_name = doc.operator[]("username").toString();
+    m_user_name = doc.object().operator[]("username").toString();
     emit usernameChanged(m_user_name);
     qDebug()<<"username:"<<m_user_name;
 }
@@ -262,15 +275,16 @@ void Lichess::replyGetInfo()
 void Lichess::replyStreamIncomingEvent()
 {
     QString data = reply_streamIncomingEvent->readAll();
+//    reply_streamIncomingEvent->deleteLater();
     if(data.length()>5){
         qDebug()<<"Incoming:"<<data;
         QJsonDocument doc=QJsonDocument::fromJson(data.toUtf8());
 
-        QString type = doc.operator[]("type").toString();
+        QString type = doc.object().operator[]("type").toString();
 
         if(type == "gameStart")     // 1 game mới đã được tạo với thông số là idGame
         {
-            QString id = doc.operator[]("game").operator[]("id").toString();
+            QString id = doc.object().operator[]("game").toObject().operator[]("id").toString();
             if(gamestate == GAME_STATE_ILDE || gamestate == GAME_STATE_FINISH)
             {
                 m_idGame  = id;
@@ -278,21 +292,21 @@ void Lichess::replyStreamIncomingEvent()
             }
         }else if(type == "gameFinish")
         {
-            QString id = doc.operator[]("game").operator[]("id").toString();
+            QString id = doc.object().operator[]("game").toObject().operator[]("id").toString();
             gamestate = GAME_STATE_FINISH;
         }else if(type == "challenge")
         {
             QString challenger_name,info;
-            m_idChallenge   = doc.operator[]("challenge").operator[]("id").toString();
-            challenger_name     = doc.operator[]("challenge").operator[]("challenger").operator[]("name").toString();
-            int challenger_rating   = doc.operator[]("challenge").operator[]("challenger").operator[]("rating").toInt();
-//            bool    challenger_online   = doc.operator[]("challenge").operator[]("challenger").operator[]("online").toBool();
-            QString challenge_variant  = doc.operator[]("challenge").operator[]("variant").operator[]("key").toString();
-            bool    challenge_rated    = doc.operator[]("challenge").operator[]("rated").toBool();
-            QString challenge_timeControl_type = doc.operator[]("challenge").operator[]("timeControl").operator[]("type").toString();
-            int challenge_timeControl_limit = doc.operator[]("challenge").operator[]("timeControl").operator[]("limit").toInt();
-            int challenge_timeControl_increment = doc.operator[]("challenge").operator[]("timeControl").operator[]("increment").toInt();
-            QString challenge_color = doc.operator[]("challenge").operator[]("color").toString();
+            m_idChallenge   = doc.object().operator[]("challenge").toObject().operator[]("id").toString();
+            challenger_name     = doc.object().operator[]("challenge").toObject().operator[]("challenger").toObject().operator[]("name").toString();
+            int challenger_rating   = doc.object().operator[]("challenge").toObject().operator[]("challenger").toObject().operator[]("rating").toInt();
+//            bool    challenger_online   = doc.object().operator[]("challenge").toObject().operator[]("challenger").toObject().operator[]("online").toBool();
+            QString challenge_variant  = doc.object().operator[]("challenge").toObject().operator[]("variant").toObject().operator[]("key").toString();
+            bool    challenge_rated    = doc.object().operator[]("challenge").toObject().operator[]("rated").toBool();
+            QString challenge_timeControl_type = doc.object().operator[]("challenge").toObject().operator[]("timeControl").toObject().operator[]("type").toString();
+            int challenge_timeControl_limit = doc.object().operator[]("challenge").toObject().operator[]("timeControl").toObject().operator[]("limit").toInt();
+            int challenge_timeControl_increment = doc.object().operator[]("challenge").toObject().operator[]("timeControl").toObject().operator[]("increment").toInt();
+            QString challenge_color = doc.object().operator[]("challenge").toObject().operator[]("color").toString();
 
 
             if(challenger_name != m_user_name){ // nếu người thách đấu không phải chính mình
@@ -307,18 +321,18 @@ void Lichess::replyStreamIncomingEvent()
 
         }else if(type == "challengeCanceled")
         {
-            QString id = doc.operator[]("challenge").operator[]("id").toString();
-            QString challenger_name     = doc.operator[]("challenge").operator[]("challenger").operator[]("name").toString();
+            QString id = doc.object().operator[]("challenge").toObject().operator[]("id").toString();
+            QString challenger_name     = doc.object().operator[]("challenge").toObject().operator[]("challenger").toObject().operator[]("name").toString();
             emit incomingEventChallengeCanceled(id,challenger_name);
         }else if(type == "challengeDeclined")
         {
-            QString id = doc.operator[]("challenge").operator[]("id").toString();
-            QString challenger_name     = doc.operator[]("challenge").operator[]("challenger").operator[]("name").toString();
+            QString id = doc.object().operator[]("challenge").toObject().operator[]("id").toString();
+            QString challenger_name     = doc.object().operator[]("challenge").toObject().operator[]("challenger").toObject().operator[]("name").toString();
             emit incomingEventChallengeDeclined(id,challenger_name);
         }
 
         if(gamestate == GAME_STATE_STARTING){
-            QString gameId = doc.operator[]("game").operator[]("id").toString();  // get gameId from json
+            QString gameId = doc.object().operator[]("game").toObject().operator[]("id").toString();  // get gameId from json
             emit onNewgame(gameId);
         }
 
@@ -327,64 +341,64 @@ void Lichess::replyStreamIncomingEvent()
 
 void Lichess::replyStreamGame()
 {
-    LichessData m_game;
 
     QString data = reply_streamGame->readAll();
+//    reply_streamGame->deleteLater();
     if(data.length() > 5)
     {
-        qDebug()<<"StreamGame:"<<data;
+        qDebug()<<"SShahaha-StreamGame:"<<data;
         QJsonDocument doc=QJsonDocument::fromJson(data.toUtf8());
-        QString id     = doc.operator[]("id").toString();
+        QString id     = doc.object().operator[]("id").toString();
 //        qDebug()<<"ID:"<<id<<" length:"<<id.length();
         /* nếu streamGame là bắt đầu 1 Game mới */
 
         if(id.length()==8)
         {
             m_idGame = id;
-            m_variant = doc.operator[]("variant").operator[]("key").toString();
-            m_rated    = doc.operator[]("rated").toBool();
+            m_variant = doc.object().operator[]("variant").toObject().operator[]("key").toString();
+            m_rated    = doc.object().operator[]("rated").toBool();
 
             /* nếu Black là engine */
-            int _black_ai_level = doc.operator[]("black").operator[]("aiLevel").toInt();
+            int _black_ai_level = doc.object().operator[]("black").toObject().operator[]("aiLevel").toInt();
             if(_black_ai_level > 0)
             {
                 m_flip = false; // rival chơi quân đen
                 m_rival_is_computer = true;
-                m_player_elo = doc.operator[]("white").operator[]("rating").toInt();
+                m_player_elo = doc.object().operator[]("white").toObject().operator[]("rating").toInt();
                 m_rival_name = "Stockfish Cấp độ "+QString::number(_black_ai_level);
                 m_rival_elo = _black_ai_level;
-                m_player_time_left = doc.operator[]("state").operator[]("wtime").toInt();
-                m_rival_time_left  = doc.operator[]("state").operator[]("btime").toInt();
+                m_player_time_left = doc.object().operator[]("state").toObject().operator[]("wtime").toInt();
+                m_rival_time_left  = doc.object().operator[]("state").toObject().operator[]("btime").toInt();
             }   /* nếu White là engine */
-            else if(doc.operator[]("white").operator[]("aiLevel").toInt() > 0)
+            else if(doc.object().operator[]("white").toObject().operator[]("aiLevel").toInt() > 0)
             {
                 m_flip = true; // rival chơi quân trắng
                 m_rival_is_computer = true;
-                m_player_elo = doc.operator[]("black").operator[]("rating").toInt();
-                m_rival_elo  = doc.operator[]("white").operator[]("aiLevel").toInt(); // nếu là Engine thì rating là level
+                m_player_elo = doc.object().operator[]("black").toObject().operator[]("rating").toInt();
+                m_rival_elo  = doc.object().operator[]("white").toObject().operator[]("aiLevel").toInt(); // nếu là Engine thì rating là level
                 m_rival_name = "Stockfish Cấp độ "+QString::number(m_rival_elo);
-                m_player_time_left = doc.operator[]("state").operator[]("btime").toInt();
-                m_rival_time_left  = doc.operator[]("state").operator[]("wtime").toInt();
+                m_player_time_left = doc.object().operator[]("state").toObject().operator[]("btime").toInt();
+                m_rival_time_left  = doc.object().operator[]("state").toObject().operator[]("wtime").toInt();
             }   /* nếu cả 2 đều không phải là Engine */
             else
             {
                 m_rival_is_computer = false;
-                QString white_name =  m_game.white_name= doc.operator[]("white").operator[]("name").toString();
+                QString white_name = doc.object().operator[]("white").toObject().operator[]("name").toString();
                 if(white_name == m_user_name) // nếu trùng tên thì player chơi quân trắng
                 {
-                    m_player_elo = doc.operator[]("white").operator[]("rating").toInt();
-                    m_rival_elo  = doc.operator[]("black").operator[]("rating").toInt();
-                    m_rival_name = doc.operator[]("black").operator[]("name").toString();
+                    m_player_elo = doc.object().operator[]("white").toObject().operator[]("rating").toInt();
+                    m_rival_elo  = doc.object().operator[]("black").toObject().operator[]("rating").toInt();
+                    m_rival_name = doc.object().operator[]("black").toObject().operator[]("name").toString();
                     m_flip = false;
-                    m_player_time_left = doc.operator[]("state").operator[]("wtime").toInt();
-                    m_rival_time_left  = doc.operator[]("state").operator[]("btime").toInt();
+                    m_player_time_left = doc.object().operator[]("state").toObject().operator[]("wtime").toInt();
+                    m_rival_time_left  = doc.object().operator[]("state").toObject().operator[]("btime").toInt();
                 }else       // ko thì player chơi quân đen
                 {
-                    m_rival_elo  = doc.operator[]("white").operator[]("rating").toInt();
-                    m_player_elo = doc.operator[]("black").operator[]("rating").toInt();
-                    m_rival_name = doc.operator[]("white").operator[]("name").toString();
-                    m_player_time_left = doc.operator[]("state").operator[]("btime").toInt();
-                    m_rival_time_left  = doc.operator[]("state").operator[]("wtime").toInt();
+                    m_rival_elo  = doc.object().operator[]("white").toObject().operator[]("rating").toInt();
+                    m_player_elo = doc.object().operator[]("black").toObject().operator[]("rating").toInt();
+                    m_rival_name = doc.object().operator[]("white").toObject().operator[]("name").toString();
+                    m_player_time_left = doc.object().operator[]("state").toObject().operator[]("btime").toInt();
+                    m_rival_time_left  = doc.object().operator[]("state").toObject().operator[]("wtime").toInt();
                 }
             }
             QString _rivalname;
@@ -393,28 +407,28 @@ void Lichess::replyStreamGame()
             }else{
                 _rivalname = m_rival_name;
             }
-            QString moves = doc.operator[]("state").operator[]("moves").toString();
-            QString status = doc.operator[]("state").operator[]("status").toString();
-            QString winner = doc.operator[]("state").operator[]("winner").toString();
+            QString moves = doc.object().operator[]("state").toObject().operator[]("moves").toString();
+            QString status = doc.object().operator[]("state").toObject().operator[]("status").toString();
+            QString winner = doc.object().operator[]("state").toObject().operator[]("winner").toString();
             if(status == "started" && winner.length()<3){
                 emit lichessNewGame(_rivalname,m_rival_is_computer,
                        m_user_name+" ("+QString::number(m_player_elo)+")",m_flip,moves);
             }
         }else   /* nếu streamGame tiếp tục game đang diễn ra */
         {
-            if(doc.operator[]("type")=="gameState")
+            if(doc.object().operator[]("type")=="gameState")
             {
                 bool isWhiteWin=false;
-                QStringList moves = doc.operator[]("moves").toString().split(' ');
+                QStringList moves = doc.object().operator[]("moves").toString().split(' ');
                 QString move = moves.last();
-                QString status= doc.operator[]("status").toString();
+                QString status= doc.object().operator[]("status").toString();
                 if(move.length()>3)
                     emit stateGameMoves(move);
 
                 if(status =="stalemate"){
                     emit incomingEventGameFinish(m_idGame,false,true,status);
                 }else if(status =="mate" || status =="resign"){
-                    if(doc.operator[]("winner").toString() =="white")
+                    if(doc.object().operator[]("winner").toString() =="white")
                         isWhiteWin = true;
                     else
                         isWhiteWin = false;
@@ -429,6 +443,7 @@ void Lichess::replyStreamGame()
 void Lichess::replyChallengeAI()
 {
     QString data = reply_challengeAI->readAll();
+    reply_challengeAI->deleteLater();
     qDebug()<<"ChallengeAI:"<<data;
 
 }
@@ -436,26 +451,29 @@ void Lichess::replyChallengeAI()
 void Lichess::replyChallengeFriend()
 {
     QString data = reply_challengeFriend->readAll();
+    reply_challengeFriend->deleteLater();
     qDebug()<<"ChallengeFriend:"<<data;
     QJsonDocument doc=QJsonDocument::fromJson(data.toUtf8());
-    m_idChallenge = doc.operator[]("challenge").operator[]("id").toString();
+    m_idChallenge = doc.object().operator[]("challenge").toObject().operator[]("id").toString();
 
 }
 
 void Lichess::replyChallengeWord()
 {
     QString data = reply_challengeWord->readAll();
+    reply_challengeWord->deleteLater();
     qDebug()<<"ChallengeWord:"<<data;
 }
 
 void Lichess::replyMakeMove()
 {
     QString data = reply_makeMove->readAll();
+    reply_makeMove->deleteLater();
 //    qDebug()<<"Reply-MakeMove:"<<data;
     QJsonDocument doc=QJsonDocument::fromJson(data.toUtf8());
-    bool moveok     = doc.operator[]("ok").toBool();
+    bool moveok     = doc.object().operator[]("ok").toBool();
     if(moveok==false){
-        QString note = doc.operator[]("error").toString();
+        QString note = doc.object().operator[]("error").toString();
         emit moveError(note);
     }
 }
@@ -463,22 +481,25 @@ void Lichess::replyMakeMove()
 void Lichess::replyAbort()
 {
     QString data = reply_abort->readAll();
+    reply_abort->deleteLater();
     QJsonDocument doc=QJsonDocument::fromJson(data.toUtf8());
-    bool success =  doc.operator[]("ok").toBool();
+    bool success =  doc.object().operator[]("ok").toBool();
     emit onAbortGame(success);
 }
 
 void Lichess::replyResign()
 {
     QString data = reply_resign->readAll();
+    reply_resign->deleteLater();
     QJsonDocument doc=QJsonDocument::fromJson(data.toUtf8());
-    bool success =  doc.operator[]("ok").toBool();
+    bool success =  doc.object().operator[]("ok").toBool();
     emit onResignGame(success);
 }
 
 void Lichess::replyRequest()
 {
     QString data = reply_request->readAll();
+    reply_request->deleteLater();
     qDebug()<<"Reply-Request:"<<data;
 }
 
@@ -486,10 +507,11 @@ void Lichess::startStreamIncoming()
 {
     qDebug("startStreamIncoming...");
     QNetworkRequest request(QUrl("https://lichess.org/api/stream/event"));
+    request.setSslConfiguration(sslconfig);
     QString bearer = "Bearer ";
     bearer.append(m_token);
     request.setRawHeader("Authorization",bearer.toUtf8());
-    reply_streamIncomingEvent = netmanager_stream->get(request);
+    reply_streamIncomingEvent = netmanager->get(request);
     connect(reply_streamIncomingEvent, &QIODevice::readyRead, this, &Lichess::replyStreamIncomingEvent);
 }
 
@@ -500,10 +522,11 @@ void Lichess::startStreamGame(QString idGame)
     if(idGame.length()<5) return;
     url.append(idGame);
     QNetworkRequest request(QUrl(url.toUtf8()));
+    request.setSslConfiguration(sslconfig);
     QString bearer = "Bearer ";
     bearer.append(m_token);
     request.setRawHeader("Authorization",bearer.toUtf8());
-    reply_streamGame = netmanager_stream->get(request);
+    reply_streamGame = netmanager->get(request);
     connect(reply_streamGame, &QIODevice::readyRead, this, &Lichess::replyStreamGame);
 }
 
