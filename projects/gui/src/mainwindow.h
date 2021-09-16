@@ -35,6 +35,7 @@
 #include "settings.h"
 #include "robotdebug.h"
 #include "sound.h"
+#include "mdebug.h"
 
 namespace Chess {
 	class Board;
@@ -120,7 +121,8 @@ private slots:
 
 
 
-        ThreadIR *threadIr;
+//        ThreadIR *threadIr;
+          Mdebug *mdebug;
         ChessGame *main_game;
         //test
         RobotDebug *robotdebug;

@@ -1,12 +1,15 @@
 #include "threadir.h"
 #include <QDebug>
+#include <iostream>
+
 #define IRCODE_ENTER 32798
 
 ThreadIR::ThreadIR(QObject *parent) :QThread(parent)
 {
-//    int fd = open("/sys/class/rc/rc0/protocols",O_WRONLY);
-//    write(fd,"+nec",4);
-//    close(fd);
+    /* config enable NEC IR */
+    int fd = open("/sys/class/rc/rc0/protocols",O_WRONLY);
+    write(fd,"+nec",4);
+    close(fd);
 }
 
 void ThreadIR::run()

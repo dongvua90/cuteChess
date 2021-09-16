@@ -14,7 +14,6 @@ Robot::Robot()
     loopTime = new QTimer(this);
     connect(loopTime,&QTimer::timeout,this,&Robot::timeloop);
     loopTime->start(200);
-    initIrFile();
 }
 
 int Robot::readSensorBoard()
@@ -93,13 +92,6 @@ int Robot::i2c_readInfoMainBoard()
      RobochessApplication::instance()->info_arm_move_finish = data_rev[6] & 0b00001000;
      return 0;
 }
-void Robot::makeMove(int qFrom, int qTo, Robot::MOVETYPE move_type)
-{
-    engine_qFrom = qFrom;
-    engine_qTo   = qTo;
-    engine_movetype =   move_type;
-    step_arm_move =1;       // bật Flag để gửi lệnh move qua I2C.
-}
 /* Protocol i2c-interface Write: 4 Byte
 * [CMD]--[DATA0]-[DATA1]-[DATA2]
 * CMD: 1 => Move Piece , qFrom = DATA0 , sTo = DATA1 , option = DATA2.
@@ -173,15 +165,6 @@ int Robot::i2c_writeMoveMainBoard(uint8_t qfrom, uint8_t qto, Robot::MOVETYPE ty
      return 0;
 }
 
-int Robot::initIrFile()
-{
-    /* config enable NEC IR */
-    int fd = open("/sys/class/rc/rc0/protocols",O_WRONLY);
-    write(fd,"+nec",4);
-    close(fd);
-    return 0;
-}
-
 int Robot::calculatorMove(uint8_t board_before[64], uint8_t board_after[64])
 {
     uint8_t qFrom=0,qTo=0,len_square_changed=0;
@@ -190,7 +173,7 @@ int Robot::calculatorMove(uint8_t board_before[64], uint8_t board_after[64])
         if(board_before[i] != board_after[i])   // phát hiện ô khác nhau
         {
             if(len_square_changed>3){ // nếu có trên 4 sự thay đổi trên bàn cờ thì move là lỗi
-                emit onHumanMoveError();
+                RobochessApplication::instance()->mainWindow->sound.Sound_moveError();
                 return -1;
             }
             square_change[len_square_changed] = i;
@@ -198,8 +181,8 @@ int Robot::calculatorMove(uint8_t board_before[64], uint8_t board_after[64])
         }
     }
 
-    if(len_square_changed < 2){   // nếu chỉ có 1 ô thay đổi thì move là erorr
-        emit onHumanMoveError();
+    if(len_square_changed < 2){   // nếu chỉ có 1 ô thay đổi thì move là error
+        RobochessApplication::instance()->mainWindow->sound.Sound_moveError();
         return -1;
     }
     switch (len_square_changed) {
@@ -212,6 +195,7 @@ int Robot::calculatorMove(uint8_t board_before[64], uint8_t board_after[64])
             qTo   = square_change[0];
         }
         emit boardSensorMakeMove(convertSquareToMove(qFrom,qTo));
+        qDebug()<<"You move:"<<convertSquareToMove(qFrom,qTo);
         return 0;
     case 3:                     // ăn tốt qua đường
         for(int k=0;k<3;k++){
@@ -224,33 +208,37 @@ int Robot::calculatorMove(uint8_t board_before[64], uint8_t board_after[64])
         else if((qTo+9)==square_change[0] || (qTo+9)==square_change[1] || (qTo+9)==square_change[2])
             qFrom = qTo+9;
         emit boardSensorMakeMove(convertSquareToMove(qFrom,qTo));
-
+        qDebug()<<"You move:passant-"<<convertSquareToMove(qFrom,qTo);
+        return 0;
     case 4:                     // nhập thành
         int isTrue =0;
         for(int i=0;i<4;i++){
-            if(square_change[i] ==56) isTrue++;
-            if(square_change[i] ==57) isTrue++;
-            if(square_change[i] ==58) isTrue++;
-            if(square_change[i] ==59) isTrue++;
+            if(square_change[i] ==60) isTrue++;
+            if(square_change[i] ==61) isTrue++;
+            if(square_change[i] ==62) isTrue++;
+            if(square_change[i] ==63) isTrue++;
+//            qDebug()<<"square_change:"<<square_change[i];
         }
         if(isTrue==4) {         // nhập thành cánh vua
             emit boardSensorMakeMove(convertSquareToMove(4,6));
+            qDebug()<<"You move:Castling King";
             return 0;
         }else {
             isTrue =0;
             for(int i=0;i<4;i++){
+                if(square_change[i] ==56) isTrue++;
+                if(square_change[i] ==58) isTrue++;
                 if(square_change[i] ==59) isTrue++;
                 if(square_change[i] ==60) isTrue++;
-                if(square_change[i] ==61) isTrue++;
-                if(square_change[i] ==63) isTrue++;
             }
             if(isTrue==4){      // nhập thành cánh hậu
                 emit boardSensorMakeMove(convertSquareToMove(4,1));
+                qDebug()<<"You move: castling Queen";
                 return 0;
             }
         }
     }
-    return 0;
+    return -1;
 }
 
 void Robot::printBoard(uint8_t dat[])
@@ -267,14 +255,14 @@ void Robot::printBoard(uint8_t dat[])
 
 void Robot::requestMakeMove()
 {
-    qDebug()<<"RequestMakeMove: waiting for chesspiece ok";
-    RobochessApplication::instance()->mainWindow->m_gameViewer->boardScene()->number_piece_error = 5;
+    qDebug()<<"You turn Move:";
+//    RobochessApplication::instance()->mainWindow->m_gameViewer->boardScene()->number_piece_error = 5;
     step_getHumanMove = 1;
 }
 
 void Robot::boardMoveError()
 {
-    qDebug()<<"move ERRor";
+    qDebug()<<"move Error";
     isHumanEnter=false;
     step_getHumanMove = 2;
 }
@@ -284,7 +272,7 @@ void Robot::timeloop()
     /*  BEGIN DETECT PIECE ERROR    */
     readSensorBoard();
     emit onPieceError(data_board);
-
+    taskCheckingPiecesPosition();
     taskStatus();
     taskArmMove();
 
@@ -316,25 +304,14 @@ void Robot::updateWifiSignal()
     process.deleteLater();
 }
 
-void Robot::taskGetHumanMove()
+void Robot::taskGetHumanMove()      // task này sẽ không phát ra lỗi vị trí pieces
 {
     if(step_getHumanMove == 1){     // bước 1: kiểm tra xem vị trí pieces đã đúng chưa
-        if(RobochessApplication::instance()->mainWindow->
-                m_gameViewer->boardScene()->number_piece_error ==0)
-        {
-            for(int i=0;i<64;i++){
-                board_human_before[i] = data_board[i];  // lưu vị trí board trước khi di chuyển
-            }
-            RobochessApplication::instance()->mainWindow->sound.Sound_playerTurn(); // thông báo đến lượt người chơi di chuyển
-            step_getHumanMove = 2;
-            qDebug()<<" hay bat dau di chuyen";
-        }else{
-            tik_timleft_edit_piece++;
-            if(tik_timleft_edit_piece==1 || (tik_timleft_edit_piece %100)){  // phát sound chỉnh lại vị trí quân cờ mỗi 20s
-                RobochessApplication::instance()->mainWindow->sound.Sound_positionError();
-                qDebug()<<" hay chinh lại quan co";
-            }
+        for(int i=0;i<64;i++){
+            board_human_before[i] = data_board[i];  // lưu vị trí board trước khi di chuyển
         }
+        RobochessApplication::instance()->mainWindow->sound.Sound_playerTurn(); // thông báo đến lượt người chơi di chuyển
+        step_getHumanMove = 2;
     }else if(step_getHumanMove == 2){   // bước 2: chờ người dùng nhấn Enter (IR)
         if(isHumanEnter)    // khi người dùng bấm nút Enter
         {
@@ -350,6 +327,29 @@ void Robot::taskGetHumanMove()
             }
             isHumanEnter = false;
         }
+    }
+}
+
+void Robot::taskCheckingPiecesPosition()
+{
+    if(is_checking_piece_position){
+        if(RobochessApplication::instance()->mainWindow->
+            m_gameViewer->boardScene()->number_piece_error ==0){ // nếu m_gameViewer chưa khoi tao no sẽ gây lỗi
+            qDebug()<<"pieces position ok";
+            is_checking_piece_position = false;
+            if(tik_task_checking_pieces==0){    // nếu checking lần đầu đã OK thì ko làm gì cả
+                emit onCheckedBoardPieces();
+                return;
+            }else{                              // nếu phải chỉnh lại pieces thì phát thông báo "OK" sau khi chỉnh
+                RobochessApplication::instance()->mainWindow->sound.Sound_ok();
+                emit onCheckedBoardPieces();
+            }
+        }else{                                  // nếu sai thì thông phát thông báo ra loa
+            if(tik_task_checking_pieces % 100 ==0){ // phát thông báo mỗi 20s
+                RobochessApplication::instance()->mainWindow->sound.Sound_positionError();
+            }
+            tik_task_checking_pieces++;
+         }
     }
 }
 
@@ -375,35 +375,16 @@ void Robot::taskArmMove()
         if(tik_delay_move_finish >=25){
             tik_delay_move_finish=0;
             step_arm_move = 3;
+            qDebug()<<"ARM waiting fo finish";
         }
     }else if(step_arm_move == 3){   // bước 3: chờ đến khi robot di chuyển xong
-        if(RobochessApplication::instance()->info_arm_move_finish)
-            step_arm_move = 4;
-    }else if(step_arm_move == 4){   // bước 4: kiểm tra xem quân cờ trên bàn đã đúng chưa
-        if(RobochessApplication::instance()->mainWindow->
-                m_gameViewer->boardScene()->number_piece_error ==0){
+        if(RobochessApplication::instance()->info_arm_move_finish){
+            step_arm_move = 0;
             emit armRobotMovedFinish();
-            tik_delay_edit_piece = 0;
-            step_arm_move =0;
-        }else{                      // nếu sai thì thông phát thông báo ra loa
-            RobochessApplication::instance()->mainWindow->sound.Sound_positionError();
-            step_arm_move = 5;
-        }
-    }else if(step_arm_move == 5){   // bước 5: nếu vẫn lỗi trong khoảng 20s thì phát lại thông báo
-        if(RobochessApplication::instance()->mainWindow->
-                m_gameViewer->boardScene()->number_piece_error ==0){
-            emit armRobotMovedFinish();
-            tik_delay_edit_piece = 0;
-            step_arm_move =0;
-        }else{
-            tik_delay_edit_piece++;
-            if(tik_delay_edit_piece == 100){ // trong khoảng 20s
-                RobochessApplication::instance()->mainWindow->sound.Sound_positionError();
-                tik_delay_edit_piece =0;
-                step_arm_move =0;
-            }
+            qDebug()<<"ARM move piece finish";
         }
     }
+
 }
 
 QString Robot::convertSquareToMove(int qFrom, int qTo)
@@ -432,42 +413,49 @@ void Robot::onButtonTest()
 
 void Robot::armRobotMove(QString mov)
 {
-    qDebug()<<"ARM-robot-movr:"<<mov;
-    enum MOVETYPE movetype;
+    qDebug()<<"ARM-robot-move:"<<mov;
     int cmove[4];
-    int qfrom,qto;
     cmove[0] = mov.at(0).toLatin1() -96;
     cmove[1] = mov.at(1).toLatin1() -48;
     cmove[2] = mov.at(2).toLatin1() -96;
     cmove[3] = mov.at(3).toLatin1() -48;
-//    qDebug()<<"cm0="<<cmove[0]<<"cm1="<<cmove[1]<<"cm2="<<cmove[2]<<"cm3="<<cmove[3];
-    qfrom = (8-cmove[1])*8 + cmove[0] -1;
-    qto   = (8-cmove[3])*8 + cmove[2] -1;
-    qDebug()<<"qFrom="<<qfrom<<" qTo="<<qto;
+    engine_qFrom = (8-cmove[1])*8 + cmove[0] -1;
+    engine_qTo   = (8-cmove[3])*8 + cmove[2] -1;
+    qDebug()<<"ARM-robot-move:qFrom="<<engine_qFrom<<" qTo="<<engine_qTo;
     // nhập thành (hiện chỉ hỗ trợ bên đen)
-      if(data_board[qfrom]=='k' && qfrom==4)
-      {
-        if(qto==6){    //nhập thành cánh vua
-            makeMove(qfrom,qto,MOVE_CASLLING_KING);
+    if(data_board[engine_qFrom]=='k' && engine_qFrom==4){
+        if(engine_qTo==6){    //nhập thành cánh vua
+            engine_movetype =   MOVE_CASLLING_KING;
+            step_arm_move =1;       // bật Flag để gửi lệnh move qua I2C.
             return;
-        }else if(qto == 2){    //nhập thành cánh hậu
-            makeMove(qfrom,qto,MOVE_CASLLINGG_QUEEN);
+        }else if(engine_qTo == 2){    //nhập thành cánh hậu
+            engine_movetype =   MOVE_CASLLINGG_QUEEN;
+            step_arm_move =1;       // bật Flag để gửi lệnh move qua I2C.
             return;
          }
+     }
+     //ăn tốt qua đường
+     //nếu tốt đi chéo mà ô đích hiện không có quân cờ nào
+     if(data_board[engine_qFrom]=='p' && data_board[engine_qTo]=='_' && (engine_qTo-engine_qFrom==7 || engine_qTo-engine_qFrom==9)){
+           engine_movetype =   MOVE_PASSANT;
+           step_arm_move =1;       // bật Flag để gửi lệnh move qua I2C.
+           return;
       }
-      //ăn tốt qua đường
-      //nếu tốt đi chéo mà ô đích hiện không có quân cờ nào
-      if(data_board[qfrom]=='p' && data_board[qto]=='_' && (qto-qfrom==7 || qto-qfrom==9))
-       {
-           makeMove(qfrom,qto,MOVE_PASSANT);
-                return;
-        }
+      if(data_board[engine_qTo] != '_'){
+            engine_movetype = MOVE_KILL;
+       }else{
+            engine_movetype = MOVE_PIECE;
+       }
+      step_arm_move =1;       // bật Flag để gửi lệnh move qua I2C.
+}
 
-       if(data_board[qto] != '_')
-       {
-            movetype = MOVE_KILL;
-        }else{
-                movetype = MOVE_PIECE;
-        }
-       makeMove(qfrom,qto,movetype);
+void Robot::checkingBoardPiece()
+{
+    is_checking_piece_position = true; // on Flag
+    tik_task_checking_pieces =0;
+}
+
+void Robot::debugPrintboard()
+{
+    printBoard(data_board);
 }

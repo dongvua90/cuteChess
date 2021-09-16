@@ -47,6 +47,8 @@ class RobochessApplication : public QApplication
         MainWindow* mainWindow;     // class giao diện chính
 
 
+
+
         int info_wifi,info_battery=2;
         bool info_battery_charger=false;
         bool info_arm_move_finish=false;

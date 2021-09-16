@@ -29,6 +29,9 @@ private:
     struct input_event ev[4];
     int checkIr();
     bool isHumanEnter=false;
+
+    std::string line;
+    QStringList sline;
 };
 
 #endif // THREADIR_H

@@ -45,7 +45,7 @@
 
 MainWindow::MainWindow()
 {
-    setFixedSize(580,272);
+    setFixedSize(480,272);
     move(0,0);
     // khởi tạo timer dành cho khởi tạo lại game đang chơi dở
     timer_oldGameReturn = new QTimer();
@@ -110,15 +110,31 @@ MainWindow::MainWindow()
     connect(RobochessApplication::instance()->lichess,&Lichess::incomingEventChallenge,this,&MainWindow::onChallenger);
     connect(RobochessApplication::instance()->lichess,&Lichess::onAbortGame,this,&MainWindow::abortGameOnline);
     connect(RobochessApplication::instance()->lichess,&Lichess::onResignGame,this,&MainWindow::resignGameOnline);
-    fristscreen->exec();
+
+    //edit
+        robot = RobochessApplication::instance()->robot;
+
+
+
 
     /* kết nối signal robot  */
-    robot = RobochessApplication::instance()->robot;
+
     connect(this,&MainWindow::humanMoveError,robot,&Robot::boardMoveError); // phát tín hiệu khi nước đi bị lỗi
     connect(this,&MainWindow::armMove,robot,&Robot::armRobotMove); // phát lệnh di chuyển 1 nước đi
     connect(this,&MainWindow::requestMove,robot,&Robot::requestMakeMove);  // yêu cầu 1 nước đi
     connect(RobochessApplication::instance()->mythread,&ThreadIR::onHumanEnter,robot,&Robot::onButtonEnter);
     connect(RobochessApplication::instance()->mythread,&ThreadIR::onButtonTest,robot,&Robot::onButtonTest); //test
+//    connect(RobochessApplication::instance()->mdebug,&Mdebug::debugTRick,robot,&Robot::onButtonEnter);
+    mdebug = new Mdebug(this);
+    mdebug->start(QThread::NormalPriority);
+    connect(mdebug,&Mdebug::debugTRick,robot,&Robot::onButtonEnter);
+    connect(mdebug,&Mdebug::debugMovePiece,robot,&Robot::armRobotMove);
+    connect(mdebug,&Mdebug::debugPrintBoard,robot,&Robot::debugPrintboard);
+    connect(mdebug,&Mdebug::debugCheckingBoardPiece,robot,&Robot::checkingBoardPiece);
+    connect(mdebug,&Mdebug::debugHumanGetMove,robot,&Robot::requestMakeMove);
+
+    fristscreen->exec();
+
     /* Debug: sửa dụng 1 lineEdit và button để thay cho boardSensor vật lý để tạo 1 nước đi */
     connect(m_gameViewer,&GameViewer::debugMakeMove,this,&MainWindow::onMakeMove);
     connect(robot,&Robot::boardSensorMakeMove,this,&MainWindow::onMakeMove);

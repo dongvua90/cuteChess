@@ -30,19 +30,20 @@ public:
     Robot();
     uint8_t data_board[64];                 // chứa data được đọc từ bàn cờ
     uint8_t compression_board[32];
-    void printBoard(uint8_t dat[64]);
-
 public slots:
      void requestMakeMove();                // yêu cầu người chơi tạo 1 nước đi
      void boardMoveError();                 // người chơi đi nước đi bị lỗi
      void onButtonEnter();                  // nút nhấn IR xác nhận nước đi
      void onButtonTest();                   // nút nhấn test
      void armRobotMove(QString mov);
+     void checkingBoardPiece();             // phát thông báo nếu Pieces trên bàn cờ sai vị trí
+     void debugPrintboard();
    signals:
     void armRobotMovedFinish();             // phát ra lệnh sau khi robot di chuyển xong 1 nước đi
     void boardSensorMakeMove(QString mov);  // người chơi tạo 1 nước đi
-    void onHumanMoveError();                // phát ra lệnh khi người chơi di chuyển bị lỗi sơ cấp
+//    void onHumanMoveError();                // phát ra lệnh khi người chơi di chuyển bị lỗi sơ cấp
     void onPieceError(uint8_t board[64]);   // gửi thông tin bàn cờ đến boardScene, những quân cờ không có thực trên bàn cờ sẽ bị làm mờ
+    void onCheckedBoardPieces();            // phát ra lệnh sau khi checking pieces in board
 private:
     /*Vaiable for Engine Move*/
     int engine_qFrom,engine_qTo;        //chứa vị trí ô di chuyển được gửi từ EngineChess.
@@ -66,22 +67,21 @@ private:
     uint8_t board_human_before[64],board_human_after[64];
     bool isHumanEnter = false;
     void taskGetHumanMove();
+    bool is_checking_piece_position = false;
+    uint8_t tik_task_checking_pieces=0;
+    void taskCheckingPiecesPosition();
 
 
     uint8_t extractBoard(uint8_t dat);
     void extractBoardAll();
 
-    void makeMove(int qFrom, int qTo, Robot::MOVETYPE move_type);
-
-    /* Action for check Button IR*/
-    int initIrFile();
     int calculatorMove(uint8_t *board_before,uint8_t *board_after);
     void timeloop();
 
     void updateWifiSignal();
 
-
     QString convertSquareToMove(int qFrom,int qTo);
+    void printBoard(uint8_t dat[64]);
 
 };
 

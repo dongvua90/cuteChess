@@ -43,6 +43,10 @@ RobochessApplication::RobochessApplication(int& argc, char* argv[])
     vtKeyboard = new VirtualKeyboard();
     lichess = new Lichess();
     mainWindow = new MainWindow();
+
+
+
+
     mainWindow->show();
 
 }

@@ -5,6 +5,7 @@ HEADERS += $$PWD/chessclock.h \
     $$PWD/firstscreen.h \
     $$PWD/lichess.h \
     $$PWD/mainwindow.h \
+    $$PWD/mdebug.h \
     $$PWD/menuscreen.h \
     $$PWD/movelist.h \
     $$PWD/gameviewer.h \
@@ -31,6 +32,7 @@ SOURCES += $$PWD/main.cpp \
     $$PWD/firstscreen.cpp \
     $$PWD/lichess.cpp \
     $$PWD/mainwindow.cpp \
+    $$PWD/mdebug.cpp \
     $$PWD/menuscreen.cpp \
     $$PWD/movelist.cpp \
     $$PWD/gameviewer.cpp \

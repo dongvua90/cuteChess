@@ -505,7 +505,7 @@ void Lichess::replyRequest()
 
 void Lichess::startStreamIncoming()
 {
-    qDebug("startStreamIncoming...");
+    qDebug("SSSstartStreamIncoming...");
     QNetworkRequest request(QUrl("https://lichess.org/api/stream/event"));
     request.setSslConfiguration(sslconfig);
     QString bearer = "Bearer ";
