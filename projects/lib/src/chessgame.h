@@ -77,6 +77,8 @@ class LIB_EXPORT ChessGame : public QObject
 		void lockThread();
 		void unlockThread();
 
+        Chess::Board* m_board;
+
 	public slots:
 		void start();
 		void pause();
@@ -122,7 +124,7 @@ class LIB_EXPORT ChessGame : public QObject
 		void addPgnMove(const Chess::Move& move, const QString& comment);
 		void emitLastMove();
 		
-		Chess::Board* m_board;
+//		Chess::Board* m_board;
 		ChessPlayer* m_player[2];
 		TimeControl m_timeControl[2];
 		const OpeningBook* m_book[2];

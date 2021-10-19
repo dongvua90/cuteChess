@@ -135,6 +135,7 @@ void ChessClock::start(int totalTime)
 		m_timerId = startTimer(1000);
 		setTime(totalTime);
 	}
+    qDebug()<<"clock-start";
 }
 
 void ChessClock::stop()

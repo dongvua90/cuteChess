@@ -6,7 +6,7 @@ Lichess::Lichess()
     :gamestate(GAME_STATE_ILDE)
 {
     netmanager = new QNetworkAccessManager();
-//    m_token     = "rtNyYpS2tkjw8rTX";
+    m_token     = "rtNyYpS2tkjw8rTX";
     m_token       = setting.value("SETTING_TOKEN").toString();
     m_user_name  = setting.value("ONLINE-username").toString();
     sslconfig.setPeerVerifyMode(QSslSocket::VerifyNone);

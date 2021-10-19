@@ -1,6 +1,10 @@
 #include "mdebug.h"
-
-
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+#include <QProcess>
+#include "robot.h"
+#include "robochessapp.h"
 Mdebug::Mdebug(QObject *parent) :QThread(parent)
 {
 
@@ -49,6 +53,10 @@ void Mdebug::run()
         }else if(sline.at(0).compare("getmove")==0){
             emit debugHumanGetMove();
             qDebug()<<"emited";
+        }else if(sline.at(0).compare("uart")==0){
+            qDebug()<<"uart:";
+            RobochessApplication::instance()->robot->armRobotMove("e2e4");
+            qDebug()<<"move-finish";
         }
     }
 }

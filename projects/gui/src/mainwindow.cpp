@@ -45,55 +45,12 @@
 
 MainWindow::MainWindow()
 {
-    setFixedSize(480,272);
-    move(0,0);
-    // khởi tạo timer dành cho khởi tạo lại game đang chơi dở
+
+    // game online return: khởi tạo timer dành cho khởi tạo lại game đang chơi dở
     timer_oldGameReturn = new QTimer();
     connect(timer_oldGameReturn,&QTimer::timeout,this,&MainWindow::oldGameReturn);
     /* kết nối với robot: */
-
-    /* Tạo 1 đối tượng GameViewer. chứa bàn cờ, Clock, Name,menu... là đối tượng giao diện chính */
-    m_gameViewer = new GameViewer();
-    for (int i = 0; i < 2; i++)                     // lặp 2 lần để add 2 Clock cho 2 bên
-	{
-		Chess::Side side = Chess::Side::Type(i);
-        m_gameViewer->chessClock(side)->setPlayerName(side.toString()); // đặt tên cho clock
-	}
-    m_gameViewer->setContentsMargins(0,0,0,0);      // thiết lập Margin bằng 0
-
-	QVBoxLayout* mainLayout = new QVBoxLayout();
-	mainLayout->addWidget(m_gameViewer);
-	mainLayout->setContentsMargins(0, 0, 0, 0);
-    menu = m_gameViewer->getMenu();
-    /* kết nối menu (newgame,draw,resign,flip,settings,save) với các hàm thực thi */
-    connect(menu,SIGNAL(onNewgame()),this,SLOT(onMenuNewgame()));
-    connect(menu,SIGNAL(onFlip()),m_gameViewer->boardScene(),SLOT(flip()));
-    connect(menu,SIGNAL(onResign()),this,SLOT(onMenuResignGame()));
-    connect(menu,SIGNAL(onDraw()),this,SLOT(onMenuDrawGame()));
-    connect(menu,SIGNAL(onAbort()),this,SLOT(onMenuAbortGame()));
-
-    // khởi tạo dialog
-    dlg_challenge               = new ChallengeDialog(this);        // dialog tự động show khi có người chơi gửi lời thách đấu
-    sdialog                     = new ShowDialog(this);             // dialog nhỏ hiện thông báo và tự động ẩn sau 1 khoảng thời gian
-    dlg_challenge_cancel        = new QDialog(this);                // dialog hiện thông báo chờ đối thủ chấp nhận thách đấu khi đã gửi lời thách đấu
-    QLabel *lb_intro = new QLabel("Đang chờ đối thủ chấp nhận thách đấu...");
-    QPushButton *btn_cancel = new QPushButton("Cancel");
-    QHBoxLayout *layout_aswer = new QHBoxLayout();
-    layout_aswer->addWidget(lb_intro);
-    layout_aswer->addWidget(btn_cancel);
-    dlg_challenge_cancel->setLayout(layout_aswer);
-    connect(btn_cancel,SIGNAL(clicked()),this,SLOT(onChallengeCancel())); // kết nối với hàm thực thi lệnh hủy thách đấu khi nhấn nút Cancel
-    /* thêm layout chính vào MainWindow */
-	QWidget* mainWidget = new QWidget(this);
-	mainWidget->setLayout(mainLayout);
-    setCentralWidget(mainWidget);
-    mainWidget->setContentsMargins(0,0,0,0);
-    /* khởi tạo screen đầu tiên (màn hình newgame) */
-    fristscreen = new FirstScreen(this);
-    /* Kết nối button của fristscreen với các SLOT trong MainWindow */
-    connect(fristscreen,SIGNAL(onCpuGame()),this,SLOT(newGameOffline()));
-    connect(fristscreen,SIGNAL(onGameonlineComputer()),this,SLOT(newGameOnlineAi()));
-    connect(fristscreen,SIGNAL(onGameonlineFriend()),this,SLOT(newGameOnlineFriend()));
+    initUI();
 
     /* khi chơi offline thì GameViewer là đối tượng chính phát ra Signal humanMoveError
      * còn khi chơi online thì Class Lichess sẽ phát ra Signal humanMoveError   */
@@ -103,32 +60,26 @@ MainWindow::MainWindow()
      * lichess->moves gửi signal tới GameViewer và  MainWindow */
     connect(RobochessApplication::instance()->lichess,&Lichess::stateGameMoves,m_gameViewer,&GameViewer::makemove);
     connect(RobochessApplication::instance()->lichess,&Lichess::stateGameMoves,this,&MainWindow::movesOnlineMake);
-    connect(this,SIGNAL(humanTurn()),this,SLOT(onTestHumanTurn()));  // tổng hợp để chỉ đưa ra 1 signal ra output
     connect(RobochessApplication::instance()->lichess,&Lichess::moveError,this,&MainWindow::onHumanMoveError);
     connect(RobochessApplication::instance()->lichess,&Lichess::incomingEventGameFinish,this,&MainWindow::onGameOnlineFinish);
     connect(RobochessApplication::instance()->lichess,&Lichess::lichessNewGame,this,&MainWindow::addGameOnline);
     connect(RobochessApplication::instance()->lichess,&Lichess::incomingEventChallenge,this,&MainWindow::onChallenger);
     connect(RobochessApplication::instance()->lichess,&Lichess::onAbortGame,this,&MainWindow::abortGameOnline);
     connect(RobochessApplication::instance()->lichess,&Lichess::onResignGame,this,&MainWindow::resignGameOnline);
-
     //edit
-        robot = RobochessApplication::instance()->robot;
-
-
-
+    robot = RobochessApplication::instance()->robot;
 
     /* kết nối signal robot  */
-
-    connect(this,&MainWindow::humanMoveError,robot,&Robot::boardMoveError); // phát tín hiệu khi nước đi bị lỗi
+//    connect(this,&MainWindow::humanMoveError,robot,&Robot::boardMoveError); // phát tín hiệu khi nước đi bị lỗi
     connect(this,&MainWindow::armMove,robot,&Robot::armRobotMove); // phát lệnh di chuyển 1 nước đi
     connect(this,&MainWindow::requestMove,robot,&Robot::requestMakeMove);  // yêu cầu 1 nước đi
     connect(RobochessApplication::instance()->mythread,&ThreadIR::onHumanEnter,robot,&Robot::onButtonEnter);
     connect(RobochessApplication::instance()->mythread,&ThreadIR::onButtonTest,robot,&Robot::onButtonTest); //test
-//    connect(RobochessApplication::instance()->mdebug,&Mdebug::debugTRick,robot,&Robot::onButtonEnter);
+
     mdebug = new Mdebug(this);
     mdebug->start(QThread::NormalPriority);
     connect(mdebug,&Mdebug::debugTRick,robot,&Robot::onButtonEnter);
-    connect(mdebug,&Mdebug::debugMovePiece,robot,&Robot::armRobotMove);
+    connect(mdebug,&Mdebug::debugMovePiece,this,&MainWindow::onMakeMove);
     connect(mdebug,&Mdebug::debugPrintBoard,robot,&Robot::debugPrintboard);
     connect(mdebug,&Mdebug::debugCheckingBoardPiece,robot,&Robot::checkingBoardPiece);
     connect(mdebug,&Mdebug::debugHumanGetMove,robot,&Robot::requestMakeMove);
@@ -142,25 +93,6 @@ MainWindow::MainWindow()
 
 MainWindow::~MainWindow()
 {
-}
-
-void MainWindow::onTestHumanTurn()
-{
-    if(humanIsWhite)
-    {
-        if(moves_length%2==0){
-//            qDebug()<<"Den luot ban di chuyen!"<<moves_length;
-            m_gameViewer->setNotify(m_gameViewer->getNotify() + "\r\nĐến lượt bạn di chuyển");
-            emit requestMove();
-        }
-    }else{
-        if(moves_length%2){
-//            qDebug()<<"Den luot ban di chuyen!"<<moves_length;
-            m_gameViewer->setNotify(m_gameViewer->getNotify() + "\r\nĐến lượt bạn di chuyển");
-            emit requestMove();
-        }
-    }
-
 }
 
 void MainWindow::setCurrentGame()
@@ -198,7 +130,8 @@ void MainWindow::setCurrentGame()
             clock->setTime(player->timeControl()->timeLeft());
 
         connect(player, SIGNAL(startedThinking(int)),
-            clock, SLOT(start(int)));
+                clock, SLOT(start(int)));
+
         connect(player, SIGNAL(stoppedThinking()),
             clock, SLOT(stop()));
         //edit
@@ -253,13 +186,18 @@ void MainWindow::onMakeMove(QString move)
         RobochessApplication::instance()->lichess->makeMove(move);
     }
 
-
 }
 
 void MainWindow::onHumanTurn(int timeleft)
 {
-    Q_UNUSED(timeleft);
-    emit humanTurn();
+    if(typegame==TYPEGAME_OFFLINE){
+        if(timeleft>0){
+            auto clock = m_gameViewer->chessClock(Chess::Side::White);
+            clock->stop();
+        }
+    }
+    qDebug()<<"onHumanturn";
+    robot->requestMakeMove();
 }
 
 void MainWindow::newGameOffline()
@@ -277,8 +215,8 @@ void MainWindow::newGameOffline()
         fristscreen->dlg_newGameOffLine->createPlayerBuilder(Chess::Side::Black)
     };
 
-//    if (builders[main_game->board()->sideToMove()]->isHuman())
-//        main_game->pause();
+    if (builders[main_game->board()->sideToMove()]->isHuman())
+        main_game->pause();
     connect(main_game, SIGNAL(initialized(ChessGame*)),
         this, SLOT(addGameOffline(ChessGame*)));
     connect(main_game, SIGNAL(startFailed(ChessGame*)),
@@ -290,6 +228,8 @@ void MainWindow::newGameOffline()
     RobochessApplication::instance()->gameManager()->newGame(main_game,
            builders[Chess::Side::White], builders[Chess::Side::Black]);
     humanIsWhite = fristscreen->dlg_newGameOffLine->humanIsWhite();
+
+
 }
 
 void MainWindow::addGameOffline(ChessGame *game)
@@ -303,37 +243,50 @@ void MainWindow::addGameOffline(ChessGame *game)
     setCurrentGame();
     // Signal khi bất cứ move nào được tạo.kết hợp humanEnabled(bool) để xác định move của engine
     connect(game, SIGNAL(moveMade(Chess::GenericMove, QString, QString)),
-            this, SLOT(movesOfflineMake(Chess::GenericMove)));
+            this, SLOT(movesOfflineMake(Chess::GenericMove,QString, QString)));
     moves_length=0;
     menu->setEnableButton(false,false,true,false,true,false);
     connect(RobochessApplication::instance()->robot,&Robot::onPieceError,m_gameViewer->boardScene(),&BoardScene::setPieceError);
-    onTestHumanTurn(); //yêu cầu 1 nước đi đầu tiên
+    robot->checkingBoardPiece();
+    robot->mainboardResetSquareKill();
+    onHumanTurn(0);
 }
 
-void MainWindow::movesOfflineMake(Chess::GenericMove mov)
+void MainWindow::movesOfflineMake(const Chess::GenericMove& mov,
+                                  const QString& sanString,
+                                  const QString& comment)
 {
-    moves_length++;
-    if(humanIsWhite)
-    {
-        if(moves_length%2==0){
-//            qDebug()<<"ENGINE-MakeMove:"<<convertMoveToString(mov);
-            m_gameViewer->setNotify("Đối thủ đã di chuyển: "+convertMoveToString(mov));
-            emit armMove(convertMoveToString(mov));
-        }
-    }else{
-        if(moves_length%2){
-//            qDebug()<<"ENGINE-MakeMove:"<<convertMoveToString(mov);
-            m_gameViewer->setNotify("Đối thủ đã di chuyển: "+convertMoveToString(mov));
-            emit armMove(convertMoveToString(mov));
-        }
-    }
+     qDebug()<<"MOVES:"<<convertMoveToString(mov)<<"san:"<<sanString<<" comment:"<<comment;
+     moves_length++;
+     // do hàm này được gọi mỗi khi có 1 nước đi nên ta cần tách lấy nước đi của ENGINE và gửi đến robot-move
+     if(humanIsWhite){  // nếu người chơi chơi quân trắng
+         if((moves_length % 2)==0){  // thì moves_length = 2,4,6,8... là nước đi của ENGINE
+             qDebug()<<"Engine-move:"<<convertMoveToString(mov);
+             auto clock = m_gameViewer->chessClock(Chess::Side::White);
+             RobochessApplication::instance()->robot->armRobotMove(convertMoveToString(mov));
 
-
+             if(main_game->isFinished()==false){
+                 clock->start(clock->m_totalTime);
+             }
+         }else{ // nước đi của Engine
+             m_gameViewer->setNotify("Đối thủ đã di chuyển: "+convertMoveToString(mov));
+         }
+     }else{ // nếu người chơi quân đen
+         if((moves_length %2)==1){  // thì moves_length = 1,3,5,7,9... là nước đi của ENGINE
+             qDebug()<<"Engine-move:"<<convertMoveToString(mov);
+             main_game->pause();
+             RobochessApplication::instance()->robot->armRobotMove(convertMoveToString(mov));
+             main_game->resume();
+         }else{ // nước đi của Engine
+             m_gameViewer->setNotify("Đối thủ đã di chuyển: "+convertMoveToString(mov));
+         }
+     }
 }
 
 void MainWindow::onGameOfflineFinished(ChessGame *game, Chess::Result result)
 {
     Q_UNUSED(game);
+    qDebug()<<"onGameofflineFinish";
     menu->setEnableButton(true,false,false,false,true,false);
     if(result.type() == Chess::Result::Win){
         if(humanIsWhite && result.toShortString()=="1-0"){
@@ -389,16 +342,18 @@ void MainWindow::movesOnlineMake(QString mov)
 
 void MainWindow::onHumanMoveError(QString err)
 {
-//    qDebug("ON-Human-Move-Error!!!");
+    qDebug("ON-Human-Move-Error!!!");
     m_gameViewer->setNotify("Di chuyển bị lỗi!\r\n Thử lại!");
     sdialog->showDialog("MOVE ERROR!!!",err,2000);
     sound.Sound_moveError();
-    emit humanMoveError();
+//    emit humanMoveError();
+    moved_is_ok = false;
+    onHumanTurn(0);
 }
 
 void MainWindow::onGameStartFailed(ChessGame* game)
 {
-    QMessageBox::critical(this, tr("Game Error"), game->errorString());
+    QMessageBox::critical(this, tr("Error: init Game"), game->errorString());
 }
 
 void MainWindow::onChallengeCancel()
@@ -459,6 +414,54 @@ void MainWindow::onMenuAbortGame()
 void MainWindow::onMenuNewgame()
 {
     fristscreen->setVisible(true);
+}
+
+void MainWindow::initUI()
+{
+    setFixedSize(480,272);
+    move(0,0);
+    QVBoxLayout* mainLayout = new QVBoxLayout();    // tạo layer cha để chứa m_gameViewer
+    m_gameViewer = new GameViewer();        // Tạo 1 đối tượng GameViewer. chứa bàn cờ, Clock, Name,menu... là đối tượng giao diện chính
+    m_gameViewer->setContentsMargins(0,0,0,0);      // thiết lập Margin bằng 0
+    //    for (int i = 0; i < 2; i++)                     // lặp 2 lần để add 2 Clock cho 2 bên
+//    {
+//        Chess::Side side = Chess::Side::Type(i);
+//        m_gameViewer->chessClock(side)->setPlayerName(side.toString()); // đặt tên cho clock
+//    }
+    mainLayout->addWidget(m_gameViewer);
+    mainLayout->setContentsMargins(0, 0, 0, 0);
+/* gán con trỏ menu là menu trong m_gameViewer
+ * kết nối menu (newgame,draw,resign,flip,settings,save) với các hàm thực thi */
+    menu = m_gameViewer->getMenu();
+    connect(menu,SIGNAL(onNewgame()),this,SLOT(onMenuNewgame()));
+    connect(menu,SIGNAL(onFlip()),m_gameViewer->boardScene(),SLOT(flip()));
+    connect(menu,SIGNAL(onResign()),this,SLOT(onMenuResignGame()));
+    connect(menu,SIGNAL(onDraw()),this,SLOT(onMenuDrawGame()));
+    connect(menu,SIGNAL(onAbort()),this,SLOT(onMenuAbortGame()));
+/* thêm layout chính vào MainWindow */
+    QWidget* mainWidget = new QWidget(this);
+    mainWidget->setLayout(mainLayout);
+    setCentralWidget(mainWidget);
+    mainWidget->setContentsMargins(0,0,0,0);
+
+/* khởi tạo screen đầu tiên (màn hình newgame)
+Kết nối button của fristscreen với các SLOT trong MainWindow */
+    fristscreen = new FirstScreen(this);
+    connect(fristscreen,SIGNAL(onCpuGame()),this,SLOT(newGameOffline()));
+    connect(fristscreen,SIGNAL(onGameonlineComputer()),this,SLOT(newGameOnlineAi()));
+    connect(fristscreen,SIGNAL(onGameonlineFriend()),this,SLOT(newGameOnlineFriend()));
+
+    // khởi tạo dialog
+    dlg_challenge               = new ChallengeDialog(this);        // dialog tự động show khi có người chơi gửi lời thách đấu
+    sdialog                     = new ShowDialog(this);             // dialog nhỏ hiện thông báo và tự động ẩn sau 1 khoảng thời gian
+    dlg_challenge_cancel        = new QDialog(this);                // dialog hiện thông báo chờ đối thủ chấp nhận thách đấu khi đã gửi lời thách đấu
+    QLabel *lb_intro = new QLabel("Đang chờ đối thủ chấp nhận thách đấu...");
+    QPushButton *btn_cancel = new QPushButton("Cancel");
+    QHBoxLayout *layout_aswer = new QHBoxLayout();
+    layout_aswer->addWidget(lb_intro);
+    layout_aswer->addWidget(btn_cancel);
+    dlg_challenge_cancel->setLayout(layout_aswer);
+    connect(btn_cancel,SIGNAL(clicked()),this,SLOT(onChallengeCancel())); // kết nối với hàm thực thi lệnh hủy thách đấu khi nhấn nút Cancel
 }
 
 void MainWindow::onGameOnlineFinish(QString idGame, bool is_white_winner, bool isDraw,QString status)

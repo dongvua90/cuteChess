@@ -19,6 +19,7 @@ HEADERS += $$PWD/chessclock.h \
     $$PWD/gametabbar.h \
     $$PWD/robochessapp.h \
     $$PWD/robot.h \
+    $$PWD/robot_mainboard.h \
     $$PWD/robotdebug.h \
     $$PWD/settings.h \
     $$PWD/showdialog.h \
@@ -46,6 +47,7 @@ SOURCES += $$PWD/main.cpp \
     $$PWD/gametabbar.cpp \
     $$PWD/robochessapp.cpp \
     $$PWD/robot.cpp \
+    $$PWD/robot_mainboard.cpp \
     $$PWD/robotdebug.cpp \
     $$PWD/settings.cpp \
     $$PWD/showdialog.cpp \

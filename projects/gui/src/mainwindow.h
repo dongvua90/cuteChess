@@ -57,9 +57,9 @@ class MainWindow : public QMainWindow
 {
 	Q_OBJECT
 
-	public:
-        explicit MainWindow();
-		virtual ~MainWindow();
+public:
+    explicit MainWindow();
+    virtual ~MainWindow();
     GameViewer* m_gameViewer;
     Robot *robot;
     Robot* getRobot(); // trả lại đối tượng robot, vì chỉ được phép khởi tạo 1 đối tượng robot
@@ -71,17 +71,18 @@ public: signals:
     void requestMove();
     void humanMoveError();
 private: signals:
-    void humanTurn();
+    void armRuned();
+
 private slots:
-    //test
-        void onTestHumanTurn();
 
         void onMakeMove(QString move);
         void onHumanTurn(int timeleft);
         // New Game Offline
         void newGameOffline();             // tạo 1 game mới đấu với engine nội
         void addGameOffline(ChessGame* game);
-        void movesOfflineMake(Chess::GenericMove mov);
+        void movesOfflineMake(const Chess::GenericMove& mov,
+                              const QString& sanString,
+                              const QString& comment);
         void onGameOfflineFinished(ChessGame* game,
                                    Chess::Result result);
         //New Game Online
@@ -109,14 +110,16 @@ private slots:
         void onMenuAbortGame();
         void onMenuNewgame();
 
-	private:
+private:
+        void initUI();
+
         void setCurrentGame();
         QString nameOnClock(const QString& name, Chess::Side side);
         QString convertMoveToString(Chess::GenericMove mov);
 		MoveList* m_moveList;
 		QPointer<ChessPlayer> m_players[2];
 
-        MenuScreen *menu;
+        MenuScreen *menu;           // con trỏ đến menu trong m_gameViewer
         FirstScreen *fristscreen;
 
 
@@ -142,6 +145,13 @@ private slots:
         QTimer *timer_oldGameReturn;
         QStringList moves_returnGame;
         int num_returnGame=0;
+
+        Chess::Side side;
+        Chess::Side human_color;
+        bool arm_runing = false;
+        int first_human_turn=0;
+
+        bool moved_is_ok = true;
 };
 
 #endif // MAINWINDOW_H

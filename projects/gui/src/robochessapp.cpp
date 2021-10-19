@@ -38,6 +38,8 @@ RobochessApplication::RobochessApplication(int& argc, char* argv[])
 {
 	Mersenne::initialize(QTime(0,0,0).msecsTo(QTime::currentTime()));
     robot = new Robot();
+    robotmainboard = new robot_mainboard();
+    robotmainboard->start(QThread::LowPriority);
     mythread = new ThreadIR();
     mythread->start(QThread::LowPriority);
     vtKeyboard = new VirtualKeyboard();

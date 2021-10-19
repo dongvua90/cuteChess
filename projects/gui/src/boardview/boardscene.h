@@ -85,6 +85,7 @@ class BoardScene : public QGraphicsScene
 
         QPointF squarePos(const Chess::Square& square) const;
         int number_piece_error=0;
+         uint8_t data_fen[65];
 	public slots:
 		/*!
 		 * Clears the scene, creates a new board, and populates

@@ -33,7 +33,7 @@ class ChessClock: public QWidget
 	
 	public:
         ChessClock(bool posUp,QWidget* parent = nullptr);
-	
+        int m_totalTime;
 	public slots:
 		void setPlayerName(const QString& name);
 		void setInfiniteTime(bool infinite);
@@ -47,7 +47,7 @@ class ChessClock: public QWidget
 	private:
 		void stopTimer();
 
-		int m_totalTime;
+
 		int m_timerId;
 		bool m_infiniteTime;
 		QElapsedTimer m_time;

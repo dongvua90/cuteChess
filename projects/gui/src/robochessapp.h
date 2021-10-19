@@ -25,6 +25,7 @@
 #include "threadir.h"
 #include "virtualkeyboard.h"
 #include "lichess.h"
+#include "robot_mainboard.h"
 class EngineManager;
 class GameManager;
 class MainWindow;
@@ -41,6 +42,7 @@ class RobochessApplication : public QApplication
 		GameManager* gameManager();
         static RobochessApplication* instance(); // dùng để truy cập chính class này
         Robot *robot;               // class để thao tác với phần cứng robot
+        robot_mainboard *robotmainboard;
         ThreadIR *mythread;         // class tạo 1 thread mới để lấy tín hiệu IR_remote
         VirtualKeyboard *vtKeyboard;// class tạo bàn phím ảo
         Lichess *lichess;           // class các chức năng của lichess

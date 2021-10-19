@@ -402,7 +402,7 @@ void BoardScene::onGameFinished(ChessGame* game, Chess::Result result)
 void BoardScene::setPieceError(uint8_t currentBoard[])
 {
     QString fen = m_board->fenString();
-    uint8_t data_fen[65];
+//    uint8_t data_fen[65];
     int num=0;
     int k=0;
     while(k<65)     // chuyển định dạng Fen sang board_data
@@ -425,6 +425,15 @@ void BoardScene::setPieceError(uint8_t currentBoard[])
 //    qDebug()<<"data:"<<QString::fromLocal8Bit((char*)data_fen);
     /* so sánh tìm sự khác biệt */
     int len_error=0;
+    int number_bqueen=0;
+    int number_wqueen=0;
+    for(int k=0;k<64;k++){
+        if(data_fen[k]=='q')
+            number_bqueen++;
+        if(data_fen[k]=='Q')
+            number_wqueen++;
+    }
+
     for(int j=0;j<64;j++){
         if(data_fen[j] != '_'){  //nếu ô chứa piece
             int m_file,m_rank;
@@ -432,6 +441,17 @@ void BoardScene::setPieceError(uint8_t currentBoard[])
             m_rank = (63-j)/8;
             GraphicsPiece *piece = pieceAt(squarePos(Chess::Square(m_file,m_rank)));
             if(piece==nullptr) return;
+
+            if(number_bqueen >1){   //nếu có trên 2 quân hậu đen
+                // thì ô có bqueen được phép thay bằng bpawn
+                if(data_fen[j]=='q' && currentBoard[j]=='p')
+                    currentBoard[j]='q';
+            }
+            if(number_wqueen >1){   //nếu có trên 2 quân hậu trắng
+                // thì ô có wqueen được phép thay bằng wpawn
+                if(data_fen[j]=='Q' && currentBoard[j]=='P')
+                    currentBoard[j]='Q';
+            }
             if(data_fen[j]!= currentBoard[j]) // nếu khác với board sensor
             {
                 piece->setPieceError(true);
